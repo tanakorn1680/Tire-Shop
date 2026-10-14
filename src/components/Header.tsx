@@ -1,21 +1,27 @@
 import Link from "next/link";
-import { site } from "@/site.config";
-import Logo from "./Logo";
+import { getSite, hasContact, t } from "@/lib/supabase";
 
-const links = () => site.nav.map((n) => <Link key={n.label} href={n.href}>{n.label}</Link>);
-
-export default function Header() {
+export default async function Header() {
+  const { settings: s, services } = await getSite();
+  const name = t(s.store_name), tag = t(s.tagline), phone = t(s.phone), line = t(s.line_url);
+  const nav = [
+    { label: "หน้าแรก", href: "/" },
+    { label: "สินค้า", href: "/products" },
+    ...(services.length ? [{ label: "บริการ", href: "/#services" }] : []),
+    ...(hasContact(s) ? [{ label: "ติดต่อ", href: "#contact" }] : []),
+  ];
+  const links = () => nav.map((n) => <Link key={n.label} href={n.href}>{n.label}</Link>);
   return (
     <header className="hdr">
       <div className="wrap hdr-in">
-        <Link href="/"><Logo /></Link>
+        {name && <Link href="/" className="logo"><b>{name}</b>{tag && <small>{tag}</small>}</Link>}
         <nav className="nav-d">{links()}</nav>
         <div className="hdr-r">
-          <a className="tel" href={`tel:${site.phone.replace(/-/g, "")}`}>📞 {site.phone}</a>
-          <a className="btn btn-line" href={site.lineUrl}>LINE สอบถาม</a>
+          {phone && <a className="tel" href={`tel:${phone.replace(/[^\d+]/g, "")}`}>{phone}</a>}
+          {line && <a className="btn btn-line" href={line}>LINE</a>}
         </div>
         <details className="nav-m">
-          <summary aria-label="เมนู">☰</summary>
+          <summary aria-label="เมนู">เมนู</summary>
           <div>{links()}</div>
         </details>
       </div>

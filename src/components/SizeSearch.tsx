@@ -21,7 +21,7 @@ export default function SizeSearch({ w, a, r }: { w?: string; a?: string; r?: st
         <Sel name="w" label="กว้าง (mm)" opts={site.sizes.width} val={w} />
         <Sel name="a" label="ซีรีย์ (%)" opts={site.sizes.aspect} val={a} />
         <Sel name="r" label="วงล้อ (นิ้ว)" opts={site.sizes.rim} val={r} fmt={(o) => `R${o}`} />
-        <button className="btn btn-dark" type="submit">🔍 ค้นหา</button>
+        <button className="btn btn-dark" type="submit">ค้นหา</button>
       </form>
     </div>
   );
