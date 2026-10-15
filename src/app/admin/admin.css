@@ -154,3 +154,13 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-panel .adm-row:last-child{border-bottom:none}
 @media(min-width:1200px){.adm-tbl .acts{flex-wrap:nowrap}.adm-tbl td:last-child{width:1%;white-space:nowrap}}
 .adm-tbl .acts .btn-sm{padding:6px 12px}
+
+/* ===== การ์ดเลือกประเภทสินค้า (แสดงหลังกด "เพิ่มสินค้า") ===== */
+.adm-pick{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.adm-pick-c{display:grid;gap:4px;text-align:left;min-height:84px;padding:16px;border:none;border-radius:14px;color:#fff;font:inherit;cursor:pointer}
+.adm-pick-c b{font-size:18px}
+.adm-pick-c span{font-size:13px;opacity:.9}
+.adm-pick-c.t-new{background:var(--c-blue)}
+.adm-pick-c.t-used{background:var(--c-green)}
+.adm-pick-c.t-wheel{background:var(--c-purple)}
+.adm-pick-c:hover{filter:brightness(.94)}

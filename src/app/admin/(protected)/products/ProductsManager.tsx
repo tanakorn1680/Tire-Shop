@@ -22,7 +22,8 @@ export default function ProductsManager({
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const [editing, setEditing] = useState<AdminProduct | ProductType | null>(null); // ProductType = เพิ่มใหม่
-  const [tab, setTab] = useState<ProductType | "all">(initialTab);
+  const [picking, setPicking] = useState(false); // แสดงการ์ดเลือกประเภท หลังกด "เพิ่มสินค้า"
+  const [tabRaw, setTab] = useState<ProductType | "all">(initialTab);
   const [q, setQ] = useState(initialQ);
   const [lowOnly, setLowOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE);
@@ -34,6 +35,10 @@ export default function ProductsManager({
     for (const t of PRODUCT_TYPES) c[t.value] = items.filter((p) => p.product_type === t.value).length;
     return c;
   }, [items]);
+
+  // แท็บประเภทจะปรากฏเมื่อมีสินค้าประเภทนั้นแล้วเท่านั้น (ถ้าประเภทที่เลือกอยู่ไม่เหลือสินค้า ให้กลับไปแท็บทั้งหมด)
+  const tab: ProductType | "all" = tabRaw !== "all" && !counts[tabRaw] ? "all" : tabRaw;
+  const typesInUse = PRODUCT_TYPES.filter((t) => counts[t.value] > 0);
 
   const filtered = useMemo(
     () => items.filter((p) => (tab === "all" || p.product_type === tab) && (!lowOnly || isLowStock(p)) && matchesQuery(p, q)),
@@ -87,41 +92,62 @@ export default function ProductsManager({
     );
   }
 
-  const addType: ProductType = tab === "all" ? "new_tire" : tab;
+  // อยู่แท็บประเภทใดอยู่ กดเพิ่มแล้วเข้าฟอร์มประเภทนั้นเลย / แท็บทั้งหมดหรือยังไม่มีสินค้า ให้เลือกประเภทก่อน
+  function onAdd() {
+    if (tab === "all") setPicking((v) => !v);
+    else setEditing(tab);
+  }
 
   return (
     <>
-      <div className="adm-tabs" role="tablist">
-        <button type="button" className={`adm-tab ${tab === "all" ? "on" : ""}`} onClick={() => { setTab("all"); setLimit(PAGE); }}>
-          ทั้งหมด<span>{counts.all}</span>
-        </button>
-        {PRODUCT_TYPES.map((t) => (
-          <button key={t.value} type="button" className={`adm-tab ${CLS[t.value]} ${tab === t.value ? "on" : ""}`} onClick={() => { setTab(t.value); setLimit(PAGE); }}>
-            {t.label}<span>{counts[t.value]}</span>
+      {items.length > 0 && (
+        <div className="adm-tabs" role="tablist">
+          <button type="button" className={`adm-tab ${tab === "all" ? "on" : ""}`} onClick={() => { setTab("all"); setLimit(PAGE); }}>
+            ทั้งหมด<span>{counts.all}</span>
           </button>
-        ))}
-      </div>
+          {typesInUse.map((t) => (
+            <button key={t.value} type="button" className={`adm-tab ${CLS[t.value]} ${tab === t.value ? "on" : ""}`} onClick={() => { setTab(t.value); setLimit(PAGE); }}>
+              {t.label}<span>{counts[t.value]}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="adm-bar">
-        <input
-          className="adm-search"
-          type="search"
-          value={q}
-          onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }}
-          placeholder="ค้นหา ชื่อ ยี่ห้อ รุ่น ขนาด หรือรหัสสินค้า"
-        />
-        <button type="button" className={`adm-tab ${lowOnly ? "on" : ""}`} onClick={() => setLowOnly((v) => !v)}>
-          ใกล้หมด
-        </button>
-        <button className="btn btn-dark" type="button" onClick={() => setEditing(addType)}>
-          + เพิ่ม{typeLabel(addType)}
+        {items.length > 0 && (
+          <>
+            <input
+              className="adm-search"
+              type="search"
+              value={q}
+              onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }}
+              placeholder="ค้นหา ชื่อ ยี่ห้อ รุ่น ขนาด หรือรหัสสินค้า"
+            />
+            <button type="button" className={`adm-tab ${lowOnly ? "on" : ""}`} onClick={() => setLowOnly((v) => !v)}>
+              ใกล้หมด
+            </button>
+          </>
+        )}
+        <button className="btn btn-dark" type="button" onClick={onAdd} style={items.length === 0 ? undefined : { marginLeft: "auto" }}>
+          {tab === "all" ? "+ เพิ่มสินค้า" : `+ เพิ่ม${typeLabel(tab)}`}
         </button>
       </div>
+
+      {picking && tab === "all" && (
+        <div className="adm-pick" role="group" aria-label="เลือกประเภทสินค้าที่จะเพิ่ม">
+          {PRODUCT_TYPES.map((t) => (
+            <button key={t.value} type="button" className={`adm-pick-c ${CLS[t.value]}`} onClick={() => { setPicking(false); setEditing(t.value); }}>
+              <b>{t.label}</b>
+              <span>เพิ่มสินค้าประเภทนี้</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {err && <p className="adm-msg err" style={{ marginBottom: 12 }}>{err}</p>}
 
       {filtered.length === 0 ? (
-        <p className="adm-empty">{items.length === 0 ? "ยังไม่มีสินค้า กด \"เพิ่ม\" เพื่อเริ่มต้น" : "ไม่พบสินค้าที่ตรงกับการค้นหา"}</p>
+        <p className="adm-empty">{items.length === 0 ? "ยังไม่มีสินค้า กด \"เพิ่มสินค้า\" แล้วเลือกประเภทเพื่อเริ่มต้น" : "ไม่พบสินค้าที่ตรงกับการค้นหา"}</p>
       ) : (
         <>
           <p className="adm-sub">แสดง {shown.length} จาก {filtered.length} รายการ</p>

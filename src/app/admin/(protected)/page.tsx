@@ -56,21 +56,26 @@ export default async function AdminHome() {
         </div>
       )}
 
-      <div className="adm-stats">
-        {PRODUCT_TYPES.map((t, i) => (
-          <Link key={t.value} href={`/admin/products?type=${t.value}`} className={`adm-stat ${["c-blue", "c-green", "c-purple"][i]}`}>
-            <small>{t.label}</small>
-            <b>{qtyByType(t.value).toLocaleString("th-TH")}<span>{t.unit}</span></b>
-            <em>ดูรายละเอียด →</em>
+      {rows.length > 0 && (
+        <div className="adm-stats">
+          {PRODUCT_TYPES.map((t, i) =>
+            rows.some((r) => r.product_type === t.value) ? (
+              <Link key={t.value} href={`/admin/products?type=${t.value}`} className={`adm-stat ${["c-blue", "c-green", "c-purple"][i]}`}>
+                <small>{t.label}</small>
+                <b>{qtyByType(t.value).toLocaleString("th-TH")}<span>{t.unit}</span></b>
+                <em>ดูรายละเอียด →</em>
+              </Link>
+            ) : null,
+          )}
+          <Link href="/admin/products" className="adm-stat c-orange">
+            <small>สินค้าทั้งหมด</small>
+            <b>{rows.length.toLocaleString("th-TH")}<span>รายการ</span></b>
+            <em>มูลค่าสต็อก ฿{baht(stockValue)}</em>
           </Link>
-        ))}
-        <Link href="/admin/products" className="adm-stat c-orange">
-          <small>สินค้าทั้งหมด</small>
-          <b>{rows.length.toLocaleString("th-TH")}<span>รายการ</span></b>
-          <em>มูลค่าสต็อก ฿{baht(stockValue)}</em>
-        </Link>
-      </div>
+        </div>
+      )}
 
+      {rows.length > 0 && (
       <div className="adm-panel"><h2>สต็อกใกล้หมด{low.length > 0 ? ` (${low.length})` : ""}</h2>
       {low.length === 0 ? (
         <p className="adm-sub">ไม่มีสินค้าใกล้หมด</p>
@@ -89,6 +94,7 @@ export default async function AdminHome() {
         </div>
       )}
       </div>
+      )}
     </>
   );
 }
