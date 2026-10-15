@@ -15,16 +15,14 @@ const PAGE = 50;
 const CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
 
 export default function ProductsManager({
-  initial, brands, canDelete, initialTab, initialQ, initialAddType,
+  initial, brands, canDelete, initialTab, initialQ,
 }: {
   initial: AdminProduct[]; brands: Named[];
   canDelete: boolean; initialTab: ProductType | "all"; initialQ: string;
-  initialAddType?: ProductType; // มาจากปุ่มเพิ่มสินค้าที่หน้าหลัก เปิดฟอร์มของประเภทนี้ทันที
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
-  // ProductType = เพิ่มใหม่ (ถ้ามาจากปุ่มเลือกประเภทที่หน้าหลัก ให้เปิดฟอร์มทันทีโดยไม่ต้องเลือกซ้ำ)
-  const [editing, setEditing] = useState<AdminProduct | ProductType | null>(initialAddType ?? null);
+  const [editing, setEditing] = useState<AdminProduct | ProductType | null>(null); // ProductType = เพิ่มใหม่
   const [picking, setPicking] = useState(false); // แสดงการ์ดเลือกประเภท หลังกด "เพิ่มสินค้า"
   const [tabRaw, setTab] = useState<ProductType | "all">(initialTab);
   const [q, setQ] = useState(initialQ);
