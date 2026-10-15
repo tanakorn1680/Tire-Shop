@@ -1,28 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
+import {
+  PRODUCT_TYPES, baht, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
+  type AdminProduct, type Named, type ProductType,
+} from "@/lib/product-meta";
 import ProductForm from "./ProductForm";
 
-export type AdminProduct = {
-  id: string; brand_id: string; brand_name: string; name: string; model: string | null;
-  width_mm: number; aspect_ratio: number; rim_inch: number; size_label: string;
-  load_index: string | null; speed_rating: string | null;
-  cost_price: number; sale_price: number; stock_qty: number; low_stock_threshold: number;
-  image_path: string | null; category_id: string | null; is_active: boolean;
-};
-export type Named = { id: string; name: string };
+const PAGE = 50;
 
 export default function ProductsManager({
-  initial, brands, categories,
-}: { initial: AdminProduct[]; brands: Named[]; categories: Named[] }) {
+  initial, brands, categories, canDelete, initialTab,
+}: {
+  initial: AdminProduct[]; brands: Named[]; categories: Named[];
+  canDelete: boolean; initialTab: ProductType | "all";
+}) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
-  const [editing, setEditing] = useState<AdminProduct | "new" | null>(null);
+  const [editing, setEditing] = useState<AdminProduct | ProductType | null>(null); // ProductType = เพิ่มใหม่
+  const [tab, setTab] = useState<ProductType | "all">(initialTab);
+  const [q, setQ] = useState("");
+  const [lowOnly, setLowOnly] = useState(false);
+  const [limit, setLimit] = useState(PAGE);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: items.length };
+    for (const t of PRODUCT_TYPES) c[t.value] = items.filter((p) => p.product_type === t.value).length;
+    return c;
+  }, [items]);
+
+  const filtered = useMemo(
+    () => items.filter((p) => (tab === "all" || p.product_type === tab) && (!lowOnly || isLowStock(p)) && matchesQuery(p, q)),
+    [items, tab, q, lowOnly],
+  );
+  const shown = filtered.slice(0, limit);
 
   function upsertLocal(p: AdminProduct) {
     setItems((xs) => {
@@ -36,6 +52,7 @@ export default function ProductsManager({
 
   async function toggleActive(p: AdminProduct) {
     setBusy(true);
+    setErr(null);
     const { error } = await sb().from("products").update({ is_active: !p.is_active }).eq("id", p.id);
     setBusy(false);
     if (error) { setErr("เปลี่ยนสถานะไม่สำเร็จ"); return; }
@@ -55,9 +72,11 @@ export default function ProductsManager({
   }
 
   if (editing) {
+    const isNew = typeof editing === "string";
     return (
       <ProductForm
-        product={editing === "new" ? null : editing}
+        product={isNew ? null : editing}
+        newType={isNew ? editing : undefined}
         brands={brands}
         categories={categories}
         onDone={(saved) => {
@@ -68,44 +87,95 @@ export default function ProductsManager({
     );
   }
 
+  const addType: ProductType = tab === "all" ? "new_tire" : tab;
+
   return (
     <>
-      <div className="adm-actions" style={{ marginBottom: 16, justifyContent: "flex-start" }}>
-        <button className="btn btn-dark" type="button" onClick={() => setEditing("new")}>+ เพิ่มสินค้า</button>
+      <div className="adm-tabs" role="tablist">
+        <button type="button" className={`adm-tab ${tab === "all" ? "on" : ""}`} onClick={() => { setTab("all"); setLimit(PAGE); }}>
+          ทั้งหมด<span>{counts.all}</span>
+        </button>
+        {PRODUCT_TYPES.map((t) => (
+          <button key={t.value} type="button" className={`adm-tab ${tab === t.value ? "on" : ""}`} onClick={() => { setTab(t.value); setLimit(PAGE); }}>
+            {t.label}<span>{counts[t.value]}</span>
+          </button>
+        ))}
       </div>
+
+      <div className="adm-bar">
+        <input
+          className="adm-search"
+          type="search"
+          value={q}
+          onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }}
+          placeholder="ค้นหา ชื่อ ยี่ห้อ รุ่น ขนาด หรือรหัสสินค้า"
+        />
+        <button type="button" className={`adm-tab ${lowOnly ? "on" : ""}`} onClick={() => setLowOnly((v) => !v)}>
+          ใกล้หมด
+        </button>
+        <button className="btn btn-dark" type="button" onClick={() => setEditing(addType)}>
+          + เพิ่ม{typeLabel(addType)}
+        </button>
+      </div>
+
       {err && <p className="adm-msg err" style={{ marginBottom: 12 }}>{err}</p>}
-      {items.length === 0 ? (
-        <p className="adm-empty">ยังไม่มีสินค้า</p>
+
+      {filtered.length === 0 ? (
+        <p className="adm-empty">{items.length === 0 ? "ยังไม่มีสินค้า กด \"เพิ่ม\" เพื่อเริ่มต้น" : "ไม่พบสินค้าที่ตรงกับการค้นหา"}</p>
       ) : (
-        <div className="adm-list">
-          {items.map((p) => {
-            const img = imageUrl(p.image_path);
-            return (
-              <div className="adm-row" key={p.id}>
-                {img ? (
-                  <img className="adm-thumb" src={img} alt="" />
-                ) : (
-                  <div className="adm-thumb" />
-                )}
-                <div className="adm-row-main">
-                  <b>{p.brand_name} {p.name}{p.model ? ` ${p.model}` : ""}</b>
-                  <small>{p.size_label} · ฿{Number(p.sale_price).toLocaleString("th-TH")} · สต็อก {p.stock_qty}</small>
-                </div>
-                <span className={`adm-row-tag ${p.is_active ? "" : "off"}`}>{p.is_active ? "แสดง" : "ซ่อน"}</span>
-                {p.stock_qty <= p.low_stock_threshold && (
-                  <span className="adm-row-tag off">สต็อกใกล้หมด</span>
-                )}
-                <div className="adm-row-actions">
-                  <button className="btn btn-ghost btn-sm" type="button" onClick={() => toggleActive(p)} disabled={busy}>
-                    {p.is_active ? "ซ่อน" : "แสดง"}
-                  </button>
-                  <button className="btn btn-ghost btn-sm" type="button" onClick={() => setEditing(p)}>แก้ไข</button>
-                  <button className="btn btn-danger btn-sm" type="button" onClick={() => remove(p.id)} disabled={busy}>ลบ</button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <>
+          <p className="adm-sub">แสดง {shown.length} จาก {filtered.length} รายการ</p>
+          <table className="adm-tbl">
+            <thead>
+              <tr>
+                <th>รูป</th><th>สินค้า</th><th>ขนาด / รายละเอียด</th><th>ประเภท</th>
+                <th className="num">คงเหลือ</th><th className="num">ราคาขาย</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map((p) => {
+                const img = imageUrl(p.image_path);
+                const unit = typeUnit(p.product_type);
+                const stock = p.is_individual ? (p.stock_qty > 0 ? "พร้อมขาย" : "ขายแล้ว") : `${p.stock_qty} ${unit}`;
+                return (
+                  <tr key={p.id}>
+                    <td data-label="รูป">{img ? <img className="adm-thumb" src={img} alt="" /> : <div className="adm-thumb" />}</td>
+                    <td className="main">
+                      <b>{p.brand_name} {p.name}{p.model ? ` ${p.model}` : ""}</b>
+                      <small>
+                        {p.sku ? `รหัส ${p.sku}` : ""}{p.sku && p.storage_location ? " · " : ""}{p.storage_location ? `ที่เก็บ ${p.storage_location}` : ""}
+                      </small>
+                    </td>
+                    <td data-label="ขนาด">{specText(p) || "-"}</td>
+                    <td data-label="ประเภท">{typeLabel(p.product_type)}</td>
+                    <td className="num" data-label="คงเหลือ">
+                      {stock}
+                      {isLowStock(p) && <span className="adm-row-tag off" style={{ marginLeft: 6 }}>ใกล้หมด</span>}
+                      {!p.is_active && <span className="adm-row-tag off" style={{ marginLeft: 6 }}>ซ่อน</span>}
+                    </td>
+                    <td className="num" data-label="ราคาขาย">฿{baht(p.sale_price)}</td>
+                    <td className="acts-c">
+                      <div className="acts">
+                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => setEditing(p)}>แก้ไข</button>
+                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => toggleActive(p)} disabled={busy}>
+                          {p.is_active ? "ซ่อน" : "แสดง"}
+                        </button>
+                        {canDelete && (
+                          <button className="btn btn-danger btn-sm" type="button" onClick={() => remove(p.id)} disabled={busy}>ลบ</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {filtered.length > shown.length && (
+            <div className="adm-more">
+              <button className="btn btn-ghost" type="button" onClick={() => setLimit((n) => n + PAGE)}>แสดงเพิ่ม</button>
+            </div>
+          )}
+        </>
       )}
     </>
   );

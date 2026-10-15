@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getAdminUser } from "@/lib/supabase-server";
+import { getAdminUser, sbServer } from "@/lib/supabase-server";
 import AdminShell from "@/components/admin/AdminShell";
 
 // ครอบทุกหน้าใน /admin ยกเว้น /admin/login
@@ -20,5 +20,8 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
     );
   }
 
-  return <AdminShell role={role}>{children}</AdminShell>;
+  const supabase = await sbServer();
+  const { data: settings } = await supabase.from("store_settings").select("store_name").eq("id", 1).maybeSingle();
+
+  return <AdminShell role={role} storeName={settings?.store_name ?? undefined}>{children}</AdminShell>;
 }

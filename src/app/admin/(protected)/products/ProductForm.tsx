@@ -3,45 +3,60 @@
 import { useState } from "react";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
-import type { AdminProduct, Named } from "./ProductsManager";
+import {
+  PRODUCT_COLUMNS, dotText, parseDot, typeLabel, typeUnit,
+  type AdminProduct, type Named, type ProductType,
+} from "@/lib/product-meta";
 
 type Draft = {
-  brand_id: string; name: string; model: string;
-  width_mm: string; aspect_ratio: string; rim_inch: string;
-  load_index: string; speed_rating: string;
+  brand_id: string; name: string; model: string; sku: string; storage_location: string;
+  width_mm: string; aspect_ratio: string; rim_inch: string; load_index: string; speed_rating: string;
+  dot: string; tread_depth_mm: string; condition_note: string; defect_note: string; repair_note: string;
+  wheel_width_in: string; wheel_pcd: string; wheel_bolts: string; wheel_offset_mm: string;
   cost_price: string; sale_price: string; stock_qty: string; low_stock_threshold: string;
-  category_id: string; is_active: boolean;
+  category_id: string; is_individual: boolean; is_active: boolean;
 };
 
-function toDraft(p: AdminProduct | null): Draft {
-  if (!p) {
-    return {
-      brand_id: "", name: "", model: "",
-      width_mm: "", aspect_ratio: "", rim_inch: "",
-      load_index: "", speed_rating: "",
-      cost_price: "", sale_price: "", stock_qty: "0", low_stock_threshold: "4",
-      category_id: "", is_active: true,
-    };
-  }
+const s = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
+
+function toDraft(p: AdminProduct | null, type: ProductType): Draft {
   return {
-    brand_id: p.brand_id, name: p.name, model: p.model ?? "",
-    width_mm: String(p.width_mm), aspect_ratio: String(p.aspect_ratio), rim_inch: String(p.rim_inch),
-    load_index: p.load_index ?? "", speed_rating: p.speed_rating ?? "",
-    cost_price: String(p.cost_price), sale_price: String(p.sale_price),
-    stock_qty: String(p.stock_qty), low_stock_threshold: String(p.low_stock_threshold),
-    category_id: p.category_id ?? "", is_active: p.is_active,
+    brand_id: p?.brand_id ?? "", name: p?.name ?? "", model: s(p?.model), sku: s(p?.sku),
+    storage_location: s(p?.storage_location),
+    width_mm: s(p?.width_mm), aspect_ratio: s(p?.aspect_ratio), rim_inch: s(p?.rim_inch),
+    load_index: s(p?.load_index), speed_rating: s(p?.speed_rating),
+    dot: p ? dotText(p.dot_week, p.dot_year) : "",
+    tread_depth_mm: s(p?.tread_depth_mm), condition_note: s(p?.condition_note),
+    defect_note: s(p?.defect_note), repair_note: s(p?.repair_note),
+    wheel_width_in: s(p?.wheel_width_in), wheel_pcd: s(p?.wheel_pcd),
+    wheel_bolts: s(p?.wheel_bolts), wheel_offset_mm: s(p?.wheel_offset_mm),
+    cost_price: s(p?.cost_price), sale_price: s(p?.sale_price),
+    stock_qty: p ? String(p.stock_qty) : type === "used_tire" ? "1" : "0",
+    low_stock_threshold: p ? String(p.low_stock_threshold) : "4",
+    category_id: p?.category_id ?? "",
+    is_individual: p ? p.is_individual : type === "used_tire", // ยางมือสองติดตามรายเส้นเป็นค่าเริ่มต้น
+    is_active: p?.is_active ?? true,
   };
 }
 
+// ช่องตัวเลขที่ไม่บังคับ: ว่าง = null, ไม่ใช่ตัวเลข = NaN
+const optNum = (v: string): number | null => (v.trim() === "" ? null : Number(v));
+
 export default function ProductForm({
-  product, brands, categories, onDone,
+  product, newType, brands, categories, onDone,
 }: {
   product: AdminProduct | null;
+  newType?: ProductType;
   brands: Named[];
   categories: Named[];
   onDone: (saved: AdminProduct | null) => void;
 }) {
-  const [form, setForm] = useState<Draft>(toDraft(product));
+  const type: ProductType = product?.product_type ?? newType ?? "new_tire";
+  const isWheel = type === "wheel";
+  const isUsed = type === "used_tire";
+  const unit = typeUnit(type);
+
+  const [form, setForm] = useState<Draft>(toDraft(product, type));
   const [imagePath, setImagePath] = useState(product?.image_path ?? null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -56,7 +71,7 @@ export default function ProductForm({
     if (!file) return;
     setErr(null);
     setUploading(true);
-    const ext = file.name.split(".").pop() || "jpg";
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
     const path = `${crypto.randomUUID()}.${ext}`;
     const { error } = await sb().storage.from("product-images").upload(path, file, {
       cacheControl: "3600",
@@ -64,7 +79,7 @@ export default function ProductForm({
     });
     setUploading(false);
     if (error) {
-      setErr("อัปโหลดรูปไม่สำเร็จ");
+      setErr("อัปโหลดรูปไม่สำเร็จ (รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5 MB)");
       return;
     }
     setImagePath(path);
@@ -74,26 +89,62 @@ export default function ProductForm({
     e.preventDefault();
     setErr(null);
 
-    const width_mm = Number(form.width_mm), aspect_ratio = Number(form.aspect_ratio), rim_inch = Number(form.rim_inch);
+    const width_mm = optNum(form.width_mm), aspect_ratio = optNum(form.aspect_ratio), rim_inch = optNum(form.rim_inch);
     const cost_price = Number(form.cost_price), sale_price = Number(form.sale_price);
     const stock_qty = Number(form.stock_qty), low_stock_threshold = Number(form.low_stock_threshold);
+    const tread = optNum(form.tread_depth_mm);
+    const wWidth = optNum(form.wheel_width_in), bolts = optNum(form.wheel_bolts), offset = optNum(form.wheel_offset_mm);
+    const dot = parseDot(form.dot);
 
     if (!form.brand_id) return setErr("กรุณาเลือกยี่ห้อ");
     if (!form.name.trim()) return setErr("กรุณากรอกชื่อสินค้า");
-    if (!width_mm || !aspect_ratio || !rim_inch) return setErr("กรุณากรอกขนาดยางให้ครบ");
-    if (Number.isNaN(cost_price) || cost_price < 0) return setErr("ราคาต้นทุนไม่ถูกต้อง");
-    if (Number.isNaN(sale_price) || sale_price < 0) return setErr("ราคาขายไม่ถูกต้อง");
+    if (isWheel) {
+      if (!rim_inch || Number.isNaN(rim_inch) || rim_inch < 8 || rim_inch > 30) return setErr("กรุณากรอกขนาดล้อ (นิ้ว) 8–30");
+      if (wWidth !== null && (Number.isNaN(wWidth) || wWidth < 3 || wWidth > 20)) return setErr("ความกว้างล้อไม่ถูกต้อง");
+      if (bolts !== null && (!Number.isInteger(bolts) || bolts < 3 || bolts > 10)) return setErr("จำนวนรูน็อตต้องเป็น 3–10");
+      if (offset !== null && (!Number.isInteger(offset) || offset < -100 || offset > 150)) return setErr("Offset ต้องอยู่ระหว่าง -100 ถึง 150");
+    } else {
+      if (!width_mm || !aspect_ratio || !rim_inch || [width_mm, aspect_ratio, rim_inch].some(Number.isNaN)) {
+        return setErr("กรุณากรอกขนาดยางให้ครบ (กว้าง / ซีรีย์ / วงล้อ)");
+      }
+      if (width_mm < 100 || width_mm > 450 || aspect_ratio < 20 || aspect_ratio > 95 || rim_inch < 8 || rim_inch > 30) {
+        return setErr("ขนาดยางอยู่นอกช่วงที่ระบบรองรับ กรุณาตรวจสอบตัวเลขอีกครั้ง");
+      }
+      if (dot === "invalid") return setErr("DOT ต้องเป็นตัวเลข 4 หลัก สัปดาห์ 01–53 ตามด้วยปี 2 หลัก เช่น 2524");
+      if (tread !== null && (Number.isNaN(tread) || tread < 0 || tread > 15)) return setErr("ความลึกดอกยางต้องอยู่ระหว่าง 0–15 มม.");
+    }
+    if (form.cost_price.trim() === "" || Number.isNaN(cost_price) || cost_price < 0) return setErr("ราคาทุนไม่ถูกต้อง");
+    if (form.sale_price.trim() === "" || Number.isNaN(sale_price) || sale_price < 0) return setErr("ราคาขายไม่ถูกต้อง");
+    if (!Number.isInteger(stock_qty) || stock_qty < 0) return setErr("จำนวนคงเหลือต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป");
+    if (form.is_individual && stock_qty > 1) return setErr(`สินค้าติดตามรายชิ้นมีได้ไม่เกิน 1 ${unit} (ถ้ามีหลายชิ้นให้เพิ่มเป็นหลายรายการ)`);
+    if (!form.is_individual && (Number.isNaN(low_stock_threshold) || low_stock_threshold < 0)) return setErr("จำนวนแจ้งเตือนไม่ถูกต้อง");
 
+    const dotOk = !isWheel && dot !== "invalid" ? dot : null;
     const payload = {
+      product_type: type,
       brand_id: form.brand_id,
       name: form.name.trim(),
       model: form.model.trim() || null,
-      width_mm, aspect_ratio, rim_inch,
-      load_index: form.load_index.trim() || null,
-      speed_rating: form.speed_rating.trim() || null,
-      cost_price, sale_price,
-      stock_qty: Number.isNaN(stock_qty) ? 0 : stock_qty,
+      sku: form.sku.trim() || null,
+      storage_location: form.storage_location.trim() || null,
+      width_mm: isWheel ? null : width_mm,
+      aspect_ratio: isWheel ? null : aspect_ratio,
+      rim_inch,
+      load_index: isWheel ? null : form.load_index.trim() || null,
+      speed_rating: isWheel ? null : form.speed_rating.trim() || null,
+      dot_week: dotOk ? dotOk.week : null,
+      dot_year: dotOk ? dotOk.year : null,
+      tread_depth_mm: isUsed ? tread : null,
+      condition_note: isUsed || isWheel ? form.condition_note.trim() || null : null,
+      defect_note: isUsed ? form.defect_note.trim() || null : null,
+      repair_note: isUsed ? form.repair_note.trim() || null : null,
+      wheel_width_in: isWheel ? wWidth : null,
+      wheel_pcd: isWheel ? form.wheel_pcd.trim() || null : null,
+      wheel_bolts: isWheel ? bolts : null,
+      wheel_offset_mm: isWheel ? offset : null,
+      cost_price, sale_price, stock_qty,
       low_stock_threshold: Number.isNaN(low_stock_threshold) ? 4 : low_stock_threshold,
+      is_individual: form.is_individual,
       category_id: form.category_id || null,
       image_path: imagePath,
       is_active: form.is_active,
@@ -103,13 +154,11 @@ export default function ProductForm({
     const q = product
       ? sb().from("products").update(payload).eq("id", product.id)
       : sb().from("products").insert(payload);
-    const { data, error } = await q
-      .select("id,brand_id,name,model,width_mm,aspect_ratio,rim_inch,size_label,load_index,speed_rating,cost_price,sale_price,stock_qty,low_stock_threshold,image_path,category_id,is_active,brands(name)")
-      .single();
+    const { data, error } = await q.select(PRODUCT_COLUMNS).single();
     setSaving(false);
 
     if (error || !data) {
-      setErr("บันทึกไม่สำเร็จ");
+      setErr(error?.code === "23505" ? "รหัสสินค้านี้มีอยู่แล้ว กรุณาใช้รหัสอื่น" : "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง");
       return;
     }
     const row = data as unknown as AdminProduct & { brands: { name: string } | null };
@@ -120,76 +169,149 @@ export default function ProductForm({
 
   return (
     <form className="adm-card adm-form" onSubmit={onSubmit}>
-      <h1 style={{ fontSize: 16 }}>{product ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}</h1>
+      <h1 style={{ fontSize: 17 }}>{product ? "แก้ไข" : "เพิ่ม"}{typeLabel(type)}</h1>
 
-      <div className="adm-f-row">
-        <label className="adm-f">ยี่ห้อ *
-          <select value={form.brand_id} onChange={(e) => set("brand_id", e.target.value)}>
-            <option value="">เลือกยี่ห้อ</option>
-            {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-          </select>
-        </label>
-        <label className="adm-f">ประเภทสินค้า
-          <select value={form.category_id} onChange={(e) => set("category_id", e.target.value)}>
-            <option value="">ไม่ระบุ</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </label>
-      </div>
+      <fieldset className="adm-fs">
+        <legend>ข้อมูลสินค้า</legend>
+        <div className="adm-f-row">
+          <label className="adm-f">ยี่ห้อ *
+            <select value={form.brand_id} onChange={(e) => set("brand_id", e.target.value)}>
+              <option value="">เลือกยี่ห้อ</option>
+              {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
+          </label>
+          <label className="adm-f">ชื่อรุ่น *
+            <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder={isWheel ? "เช่น Enkei RPF1" : "เช่น Primacy 4"} />
+          </label>
+          <label className="adm-f">{isWheel ? "รุ่นย่อย / ลาย" : "รุ่นย่อย"}
+            <input value={form.model} onChange={(e) => set("model", e.target.value)} />
+          </label>
+        </div>
+        <div className="adm-f-row">
+          <label className="adm-f">รหัสสินค้า
+            <input value={form.sku} onChange={(e) => set("sku", e.target.value)} placeholder="ไม่ซ้ำกัน เช่น MIC-2055516-01" />
+          </label>
+          <label className="adm-f">ตำแหน่งจัดเก็บ
+            <input value={form.storage_location} onChange={(e) => set("storage_location", e.target.value)} placeholder="เช่น ชั้น A แถว 2" />
+          </label>
+          {categories.length > 0 && (
+            <label className="adm-f">หมวดหมู่บนหน้าเว็บ
+              <select value={form.category_id} onChange={(e) => set("category_id", e.target.value)}>
+                <option value="">ไม่ระบุ</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </label>
+          )}
+        </div>
+      </fieldset>
 
-      <div className="adm-f-row">
-        <label className="adm-f">ชื่อรุ่น *
-          <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="เช่น Primacy 4" />
-        </label>
-        <label className="adm-f">รุ่นย่อย
-          <input value={form.model} onChange={(e) => set("model", e.target.value)} />
-        </label>
-      </div>
+      <fieldset className="adm-fs">
+        <legend>{isWheel ? "ขนาดล้อ" : "ขนาดยาง"}</legend>
+        {isWheel ? (
+          <>
+            <div className="adm-f-row">
+              <label className="adm-f">ขนาด (นิ้ว) *
+                <input type="number" inputMode="decimal" value={form.rim_inch} onChange={(e) => set("rim_inch", e.target.value)} placeholder="เช่น 17" />
+              </label>
+              <label className="adm-f">ความกว้าง (นิ้ว)
+                <input type="number" inputMode="decimal" step="0.5" value={form.wheel_width_in} onChange={(e) => set("wheel_width_in", e.target.value)} placeholder="เช่น 8.5" />
+              </label>
+              <label className="adm-f">PCD
+                <input value={form.wheel_pcd} onChange={(e) => set("wheel_pcd", e.target.value)} placeholder="เช่น 5x114.3" />
+              </label>
+            </div>
+            <div className="adm-f-row">
+              <label className="adm-f">จำนวนรูน็อต
+                <input type="number" inputMode="numeric" value={form.wheel_bolts} onChange={(e) => set("wheel_bolts", e.target.value)} placeholder="เช่น 5" />
+              </label>
+              <label className="adm-f">Offset (ET)
+                <input type="number" inputMode="numeric" value={form.wheel_offset_mm} onChange={(e) => set("wheel_offset_mm", e.target.value)} placeholder="เช่น 35" />
+              </label>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="adm-f-row">
+              <label className="adm-f">กว้าง (มม.) *
+                <input type="number" inputMode="numeric" value={form.width_mm} onChange={(e) => set("width_mm", e.target.value)} placeholder="เช่น 205" />
+              </label>
+              <label className="adm-f">ซีรีย์ (%) *
+                <input type="number" inputMode="numeric" value={form.aspect_ratio} onChange={(e) => set("aspect_ratio", e.target.value)} placeholder="เช่น 55" />
+              </label>
+              <label className="adm-f">วงล้อ (นิ้ว) *
+                <input type="number" inputMode="numeric" value={form.rim_inch} onChange={(e) => set("rim_inch", e.target.value)} placeholder="เช่น 16" />
+              </label>
+            </div>
+            <div className="adm-f-row">
+              <label className="adm-f">ดัชนีโหลด
+                <input value={form.load_index} onChange={(e) => set("load_index", e.target.value)} placeholder="เช่น 91" />
+              </label>
+              <label className="adm-f">เรทความเร็ว
+                <input value={form.speed_rating} onChange={(e) => set("speed_rating", e.target.value)} placeholder="เช่น V" />
+              </label>
+              <label className="adm-f">DOT (สัปดาห์+ปี 4 หลัก)
+                <input inputMode="numeric" maxLength={4} value={form.dot} onChange={(e) => set("dot", e.target.value)} placeholder="เช่น 2524" />
+              </label>
+            </div>
+          </>
+        )}
+      </fieldset>
 
-      <div className="adm-f-row">
-        <label className="adm-f">กว้าง (mm) *
-          <input type="number" value={form.width_mm} onChange={(e) => set("width_mm", e.target.value)} />
-        </label>
-        <label className="adm-f">ซีรีย์ (%) *
-          <input type="number" value={form.aspect_ratio} onChange={(e) => set("aspect_ratio", e.target.value)} />
-        </label>
-        <label className="adm-f">วงล้อ (นิ้ว) *
-          <input type="number" value={form.rim_inch} onChange={(e) => set("rim_inch", e.target.value)} />
-        </label>
-      </div>
+      {(isUsed || isWheel) && (
+        <fieldset className="adm-fs">
+          <legend>สภาพสินค้า</legend>
+          {isUsed && (
+            <label className="adm-f">ความลึกดอกยาง (มม.)
+              <input type="number" inputMode="decimal" step="0.1" value={form.tread_depth_mm} onChange={(e) => set("tread_depth_mm", e.target.value)} placeholder="เช่น 6.5" />
+            </label>
+          )}
+          <label className="adm-f">สภาพ
+            <textarea value={form.condition_note} onChange={(e) => set("condition_note", e.target.value)} placeholder={isWheel ? "เช่น สภาพดี ไม่มีรอยแตก" : "เช่น ยางสวย ไม่มีบวม"} />
+          </label>
+          {isUsed && (
+            <div className="adm-f-row">
+              <label className="adm-f">ตำหนิ
+                <textarea value={form.defect_note} onChange={(e) => set("defect_note", e.target.value)} />
+              </label>
+              <label className="adm-f">รอยซ่อม
+                <textarea value={form.repair_note} onChange={(e) => set("repair_note", e.target.value)} />
+              </label>
+            </div>
+          )}
+        </fieldset>
+      )}
 
-      <div className="adm-f-row">
-        <label className="adm-f">ดัชนีโหลด
-          <input value={form.load_index} onChange={(e) => set("load_index", e.target.value)} placeholder="เช่น 91" />
+      <fieldset className="adm-fs">
+        <legend>ราคาและจำนวน</legend>
+        <div className="adm-f-row">
+          <label className="adm-f">ราคาทุน (บาท) *
+            <input type="number" inputMode="decimal" step="0.01" value={form.cost_price} onChange={(e) => set("cost_price", e.target.value)} />
+          </label>
+          <label className="adm-f">ราคาขาย (บาท) *
+            <input type="number" inputMode="decimal" step="0.01" value={form.sale_price} onChange={(e) => set("sale_price", e.target.value)} />
+          </label>
+        </div>
+        <label className="adm-chk">
+          <input type="checkbox" checked={form.is_individual} onChange={(e) => set("is_individual", e.target.checked)} />
+          ติดตามรายชิ้น (1 {unit} = 1 รายการ ป้องกันการขายซ้ำ)
         </label>
-        <label className="adm-f">เรทความเร็ว
-          <input value={form.speed_rating} onChange={(e) => set("speed_rating", e.target.value)} placeholder="เช่น V" />
-        </label>
-      </div>
+        <div className="adm-f-row">
+          <label className="adm-f">จำนวนคงเหลือ ({unit})
+            <input type="number" inputMode="numeric" min={0} max={form.is_individual ? 1 : undefined} value={form.stock_qty} onChange={(e) => set("stock_qty", e.target.value)} />
+          </label>
+          {!form.is_individual && (
+            <label className="adm-f">แจ้งเตือนเมื่อเหลือ ({unit})
+              <input type="number" inputMode="numeric" min={0} value={form.low_stock_threshold} onChange={(e) => set("low_stock_threshold", e.target.value)} />
+            </label>
+          )}
+        </div>
+      </fieldset>
 
-      <div className="adm-f-row">
-        <label className="adm-f">ราคาต้นทุน (บาท) *
-          <input type="number" step="0.01" value={form.cost_price} onChange={(e) => set("cost_price", e.target.value)} />
-        </label>
-        <label className="adm-f">ราคาขาย (บาท) *
-          <input type="number" step="0.01" value={form.sale_price} onChange={(e) => set("sale_price", e.target.value)} />
-        </label>
-      </div>
-
-      <div className="adm-f-row">
-        <label className="adm-f">จำนวนสต็อก
-          <input type="number" value={form.stock_qty} onChange={(e) => set("stock_qty", e.target.value)} />
-        </label>
-        <label className="adm-f">แจ้งเตือนเมื่อเหลือ
-          <input type="number" value={form.low_stock_threshold} onChange={(e) => set("low_stock_threshold", e.target.value)} />
-        </label>
-      </div>
-
-      <label className="adm-f">รูปสินค้า
+      <label className="adm-f">{isUsed ? "รูปสินค้า (ถ่ายสภาพจริง)" : "รูปสินค้า"}
         <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onPickImage} disabled={uploading} />
       </label>
       {uploading && <p className="adm-msg">กำลังอัปโหลด...</p>}
-      {img && <img src={img} alt="" className="adm-thumb" style={{ width: 80, height: 80 }} />}
+      {img && <img src={img} alt="" className="adm-thumb" style={{ width: 96, height: 96 }} />}
 
       <label className="adm-chk">
         <input type="checkbox" checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} />
