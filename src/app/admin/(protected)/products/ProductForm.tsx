@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
 import {
@@ -67,6 +67,22 @@ export default function ProductForm({
 
   function set<K extends keyof Draft>(k: K, v: Draft[K]) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  // แผงเลือกยี่ห้อที่เลื่อนลงมาจากช่องยี่ห้อ
+  const [brandOpen, setBrandOpen] = useState(false);
+  const brandInput = useRef<HTMLInputElement>(null);
+  const brandBox = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!brandOpen) return;
+    // รอให้แป้นพิมพ์ขึ้นก่อน แล้วเลื่อนช่องยี่ห้อขึ้นมาให้เห็นแผงทั้งอัน
+    const id = window.setTimeout(() => brandBox.current?.scrollIntoView({ block: "start", behavior: "smooth" }), 250);
+    return () => window.clearTimeout(id);
+  }, [brandOpen]);
+  function pickBrand(name: string) {
+    set("brand", name);
+    setBrandOpen(false);
+    brandInput.current?.blur(); // เก็บแป้นพิมพ์
   }
 
   async function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -180,7 +196,12 @@ export default function ProductForm({
   }
 
   const img = imageUrl(imagePath);
-  const pickedBrand = form.brand.trim() ? findBrand(brands, form.brand) : undefined;
+  const typedBrand = form.brand.trim().replace(/\s+/g, " ");
+  const pickedBrand = typedBrand ? findBrand(brands, form.brand) : undefined;
+  // ระหว่างพิมพ์ แสดงเฉพาะยี่ห้อที่ตรงกับตัวอักษรที่พิมพ์ (ถ้ายังไม่พิมพ์แสดงทั้งหมด)
+  const brandChoices = typedBrand && !pickedBrand
+    ? brands.filter((b) => b.name.toLowerCase().includes(typedBrand.toLowerCase()))
+    : brands;
 
   // รูปสินค้า: ยางมือสองต้องถ่ายสภาพจริง จึงวางไว้ด้านนอก ประเภทอื่นอยู่ในรายละเอียดเพิ่มเติม
   const imageBlock = (
@@ -200,42 +221,68 @@ export default function ProductForm({
       <fieldset className="adm-fs">
         <legend>ข้อมูลสินค้า</legend>
         <div className="adm-f-row">
-          <label className="adm-f">ยี่ห้อ *
-            <input list="brand-list" value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="พิมพ์ หรือเลือกจากรายการ" autoComplete="off" />
-            <datalist id="brand-list">
-              {brands.map((b) => <option key={b.id} value={b.name} />)}
-            </datalist>
-            {form.brand.trim() && !findBrand(brands, form.brand) ? (
-              <span className="adm-hint">ยี่ห้อใหม่ ระบบจะเพิ่ม "{form.brand.trim().replace(/\s+/g, " ")}" ให้เมื่อกดบันทึก</span>
-            ) : brands.length === 0 ? (
-              <span className="adm-hint">ยังไม่มียี่ห้อในระบบ พิมพ์ชื่อได้เลย ระบบจะเพิ่มให้อัตโนมัติ</span>
-            ) : null}
-          </label>
+          <div className="adm-f">
+            <label htmlFor="brand-input">ยี่ห้อ *</label>
+            <div className="adm-combo" ref={brandBox}>
+              <input
+                id="brand-input"
+                ref={brandInput}
+                value={form.brand}
+                onChange={(e) => { set("brand", e.target.value); setBrandOpen(true); }}
+                onFocus={() => setBrandOpen(true)}
+                onBlur={() => setBrandOpen(false)}
+                onKeyDown={(e) => { if (e.key === "Escape") setBrandOpen(false); }}
+                placeholder="แตะเพื่อเลือก หรือพิมพ์ยี่ห้อใหม่"
+                autoComplete="off"
+                role="combobox"
+                aria-expanded={brandOpen}
+                aria-controls="brand-pop"
+              />
+              {brandOpen && (
+                <div
+                  id="brand-pop"
+                  className="adm-pop"
+                  onMouseDown={(e) => e.preventDefault()} // ไม่ให้ช่องเสียโฟกัสก่อนแตะเลือก
+                >
+                  {typedBrand && !pickedBrand && (
+                    <button type="button" className="adm-pop-new" onClick={() => pickBrand(typedBrand)}>
+                      + ใช้ยี่ห้อใหม่ "{typedBrand}"
+                    </button>
+                  )}
+                  {brandChoices.length > 0 ? (
+                    <>
+                      <span className="adm-pop-t">ยี่ห้อที่เคยเพิ่มไว้</span>
+                      <div className="adm-pop-l">
+                        {brandChoices.map((b) => {
+                          const on = pickedBrand?.id === b.id;
+                          return (
+                            <button
+                              key={b.id}
+                              type="button"
+                              className={`adm-chip ${TYPE_CLS[type]} ${on ? "on" : ""}`}
+                              aria-pressed={on}
+                              onClick={() => pickBrand(b.name)}
+                            >
+                              {b.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  ) : !typedBrand ? (
+                    <span className="adm-pop-t">ยังไม่มียี่ห้อในระบบ พิมพ์ชื่อได้เลย ระบบจะเพิ่มให้อัตโนมัติ</span>
+                  ) : null}
+                </div>
+              )}
+            </div>
+            {typedBrand && !pickedBrand && !brandOpen && (
+              <span className="adm-hint">ยี่ห้อใหม่ ระบบจะเพิ่ม "{typedBrand}" ให้เมื่อกดบันทึก</span>
+            )}
+          </div>
           <label className="adm-f">ชื่อรุ่น *
             <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder={isWheel ? "เช่น Enkei RPF1" : "เช่น Primacy 4"} />
           </label>
         </div>
-        {brands.length > 0 && (
-          <div className="adm-brands" role="group" aria-label="ยี่ห้อที่เคยเพิ่มไว้">
-            <span className="adm-brands-t">ยี่ห้อที่เคยเพิ่มไว้ (กดเพื่อเลือก)</span>
-            <div className="adm-brands-l">
-              {brands.map((b) => {
-                const on = pickedBrand?.id === b.id;
-                return (
-                  <button
-                    key={b.id}
-                    type="button"
-                    className={`adm-chip ${TYPE_CLS[type]} ${on ? "on" : ""}`}
-                    aria-pressed={on}
-                    onClick={() => set("brand", on ? "" : b.name)}
-                  >
-                    {b.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </fieldset>
 
       <fieldset className="adm-fs">
