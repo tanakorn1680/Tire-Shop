@@ -1,14 +1,16 @@
 import Link from "next/link";
-import type { Named } from "@/lib/supabase";
+import { PRODUCT_TYPES } from "@/lib/product-meta";
 
-// active: undefined = ไม่ไฮไลต์ (หน้าแรก), "" = ทั้งหมด, id = ประเภทที่เลือก
-export default function CategoryChips({ items, active }: { items: Named[]; active?: string }) {
-  const on = (id: string) => (active === id ? "on" : "");
+// ตัวกรองประเภทสินค้าฝั่งลูกค้า: มี "ทั้งหมด" เสมอ และแสดงเฉพาะประเภทที่มีสินค้าอยู่จริง
+// active: undefined = ไม่ไฮไลต์ (หน้าแรก), "" = ทั้งหมด, ค่าประเภท = ประเภทที่เลือก
+export default function CategoryChips({ usedTypes, active }: { usedTypes: string[]; active?: string }) {
+  const on = (v: string) => (active === v ? "on" : "");
+  const types = PRODUCT_TYPES.filter((t) => usedTypes.includes(t.value));
   return (
     <div className="chips">
       <Link href="/products" className={on("")}>ทั้งหมด</Link>
-      {items.map((c) => (
-        <Link key={c.id} href={`/products?c=${c.id}`} className={on(c.id)}>{c.name}</Link>
+      {types.map((t) => (
+        <Link key={t.value} href={`/products?t=${t.value}`} className={on(t.value)}>{t.label}</Link>
       ))}
     </div>
   );

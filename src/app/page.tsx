@@ -7,13 +7,13 @@ import ProductGrid from "@/components/ProductGrid";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [{ data, error }, { categories, services }] = await Promise.all([getProducts({ limit: 8 }), getSite()]);
+  const [{ data, error }, { usedTypes, services }] = await Promise.all([getProducts({ limit: 8 }), getSite()]);
   return (
     <>
       <div className="band" />
       <div className="wrap up">
         <SizeSearch />
-        <CategoryChips items={categories} />
+        <CategoryChips usedTypes={usedTypes} />
       </div>
       <section className="sec">
         <div className="wrap">

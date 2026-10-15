@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
+import GearMenu from "./GearMenu";
 import { imageUrl } from "@/lib/supabase";
 import {
   PRODUCT_COLUMNS, PRODUCT_TYPES, dotText, findBrand, parseDot, typeLabel, typeUnit,
@@ -54,6 +56,13 @@ export default function ProductForm({
   // เพิ่มสินค้าใหม่: เลือกประเภทในฟอร์มได้เลย ไม่ต้องเปลี่ยนหน้า (แก้ไขสินค้าเดิมเปลี่ยนประเภทไม่ได้)
   const [newT, setNewT] = useState<ProductType>(newType ?? "new_tire");
   const type: ProductType = product?.product_type ?? newT;
+  const router = useRouter();
+  // กลับจากแท็บเพิ่ม/ลบยี่ห้อ → โหลดรายการยี่ห้อใหม่ (ข้อมูลที่กรอกค้างในฟอร์มยังอยู่)
+  useEffect(() => {
+    const onFocus = () => router.refresh();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [router]);
   const isWheel = type === "wheel";
   const isUsed = type === "used_tire";
   const unit = typeUnit(type);
@@ -231,7 +240,10 @@ export default function ProductForm({
 
   return (
     <form className="adm-card adm-form" onSubmit={onSubmit}>
-      <h1 style={{ fontSize: 17 }}>{product ? "แก้ไข" : "เพิ่ม"}{typeLabel(type)}</h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <h1 style={{ fontSize: 17 }}>{product ? "แก้ไข" : "เพิ่ม"}{typeLabel(type)}</h1>
+        <GearMenu newTab />
+      </div>
 
       <fieldset className="adm-fs">
         <legend>ข้อมูลสินค้า</legend>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
@@ -10,6 +10,7 @@ import {
   type AdminProduct, type Named, type ProductType,
 } from "@/lib/product-meta";
 import ProductForm from "./ProductForm";
+import GearMenu from "./GearMenu";
 
 const PAGE = 50;
 const CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
@@ -29,16 +30,6 @@ export default function ProductsManager({
   const [limit, setLimit] = useState(PAGE);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [gear, setGear] = useState(false);
-  const gearBox = useRef<HTMLDivElement>(null);
-
-  // ปิดเมนูตั้งค่าเมื่อแตะนอกเมนู
-  useEffect(() => {
-    if (!gear) return;
-    const close = (e: Event) => { if (!gearBox.current?.contains(e.target as Node)) setGear(false); };
-    document.addEventListener("pointerdown", close);
-    return () => document.removeEventListener("pointerdown", close);
-  }, [gear]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: items.length };
@@ -137,20 +128,7 @@ export default function ProductsManager({
             </button>
           </>
         )}
-        <div className="adm-gear" ref={gearBox} style={items.length === 0 ? undefined : { marginLeft: "auto" }}>
-          <button type="button" className="adm-gear-btn" aria-label="ตั้งค่าประเภทสินค้าและยี่ห้อ" aria-expanded={gear} onClick={() => setGear((v) => !v)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
-            </svg>
-          </button>
-          {gear && (
-            <div className="adm-gear-pop">
-              <Link href="/admin/categories">เพิ่ม/ลบประเภทสินค้า</Link>
-              <Link href="/admin/brands">เพิ่ม/ลบยี่ห้อ</Link>
-            </div>
-          )}
-        </div>
+        <GearMenu style={items.length === 0 ? undefined : { marginLeft: "auto" }} />
         <button className="btn btn-dark" type="button" onClick={onAdd}>
           + เพิ่มสินค้า
         </button>

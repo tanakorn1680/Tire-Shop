@@ -6,6 +6,7 @@ export type Product = {
   size_label: string; load_index: string | null; speed_rating: string | null;
   sale_price: number; in_stock: boolean; image_path: string | null;
   category_id: string | null; category_name: string | null;
+  product_type?: string | null;
 };
 export type Settings = {
   store_name: string | null; tagline: string | null; phone: string | null;
@@ -30,24 +31,25 @@ export const getSite = cache(async () => {
   let settings: Partial<Settings> = {};
   let categories: Named[] = [];
   let services: Named[] = [];
+  let usedTypes: string[] = [];
   if (sb) {
     const [s, c, v, u] = await Promise.all([
       sb.from("store_settings").select("store_name,tagline,phone,hours,address,line_url").eq("id", 1).maybeSingle(),
       sb.from("categories").select("id,name").order("sort_order").order("name"),
       sb.from("services").select("id,name,description").eq("is_active", true).order("sort_order"),
-      sb.from("products_public").select("category_id"),
+      sb.from("products_public").select("product_type"),
     ]);
     settings = s.data ?? {};
-    // แสดงเฉพาะประเภทที่มีสินค้าแล้ว (ประเภทที่ยังว่างไม่แสดงฝั่งลูกค้า)
-    const used = new Set(((u.data ?? []) as { category_id: string | null }[]).map((p) => p.category_id));
-    categories = (c.data ?? []).filter((x) => used.has(x.id));
+    categories = c.data ?? [];
+    // ประเภทสินค้าที่มีสินค้าจริงแล้ว (ยางมือหนึ่ง / ยางมือสอง / ล้อแม็ก) — ใช้แสดงตัวกรองฝั่งลูกค้า
+    usedTypes = [...new Set(((u.data ?? []) as { product_type: string | null }[]).map((p) => p.product_type ?? ""))].filter(Boolean);
     services = v.data ?? [];
   }
-  return { settings, categories, services };
+  return { settings, categories, services, usedTypes };
 });
 
 // อ่านเฉพาะ view products_public (ไม่มีต้นทุน/จำนวนสต็อกจริง)
-export async function getProducts(f: { w?: number; a?: number; r?: number; c?: string; limit?: number }) {
+export async function getProducts(f: { w?: number; a?: number; r?: number; c?: string; t?: string; limit?: number }) {
   const sb = client();
   if (!sb) return { data: [] as Product[], error: "ยังไม่ได้ตั้งค่า Supabase (.env.local)" };
   let q = sb.from("products_public").select("*").order("sale_price");
@@ -55,6 +57,7 @@ export async function getProducts(f: { w?: number; a?: number; r?: number; c?: s
   if (f.a) q = q.eq("aspect_ratio", f.a);
   if (f.r) q = q.eq("rim_inch", f.r);
   if (f.c) q = q.eq("category_id", f.c);
+  if (f.t) q = q.eq("product_type", f.t);
   if (f.limit) q = q.limit(f.limit);
   const { data, error } = await q;
   return { data: (data ?? []) as Product[], error: error ? "โหลดสินค้าไม่สำเร็จ" : null };
