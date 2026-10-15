@@ -164,3 +164,12 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-pick-c.t-used{background:var(--c-green)}
 .adm-pick-c.t-wheel{background:var(--c-purple)}
 .adm-pick-c:hover{filter:brightness(.94)}
+
+/* ===== ฟอร์มสินค้า: ส่วนรายละเอียดเพิ่มเติม (พับได้) ===== */
+.adm-opt{border:1px solid var(--line);border-radius:12px;background:#fff}
+.adm-opt summary{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:48px;padding:0 14px;cursor:pointer;font-weight:700;font-size:14px;list-style:none}
+.adm-opt summary::-webkit-details-marker{display:none}
+.adm-opt summary::before{content:"+";display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:#eef2f8;color:var(--blue);font-weight:700}
+.adm-opt[open] summary::before{content:"\2212"}
+.adm-opt summary span{font-weight:400;font-size:12px;color:var(--muted)}
+.adm-opt-body{display:grid;gap:14px;padding:4px 14px 16px;border-top:1px solid var(--line);padding-top:14px}
