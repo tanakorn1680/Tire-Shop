@@ -17,6 +17,8 @@ type Draft = {
   is_individual: boolean; is_active: boolean;
 };
 
+const TYPE_CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
+
 const s = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
 function toDraft(p: AdminProduct | null, type: ProductType): Draft {
@@ -178,6 +180,7 @@ export default function ProductForm({
   }
 
   const img = imageUrl(imagePath);
+  const pickedBrand = form.brand.trim() ? findBrand(brands, form.brand) : undefined;
 
   // รูปสินค้า: ยางมือสองต้องถ่ายสภาพจริง จึงวางไว้ด้านนอก ประเภทอื่นอยู่ในรายละเอียดเพิ่มเติม
   const imageBlock = (
@@ -212,6 +215,27 @@ export default function ProductForm({
             <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder={isWheel ? "เช่น Enkei RPF1" : "เช่น Primacy 4"} />
           </label>
         </div>
+        {brands.length > 0 && (
+          <div className="adm-brands" role="group" aria-label="ยี่ห้อที่เคยเพิ่มไว้">
+            <span className="adm-brands-t">ยี่ห้อที่เคยเพิ่มไว้ (กดเพื่อเลือก)</span>
+            <div className="adm-brands-l">
+              {brands.map((b) => {
+                const on = pickedBrand?.id === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    className={`adm-chip ${TYPE_CLS[type]} ${on ? "on" : ""}`}
+                    aria-pressed={on}
+                    onClick={() => set("brand", on ? "" : b.name)}
+                  >
+                    {b.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </fieldset>
 
       <fieldset className="adm-fs">

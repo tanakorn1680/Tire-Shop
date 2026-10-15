@@ -192,3 +192,14 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-next b{display:block;font-size:15px}
 .adm-next span{font-size:13px;color:var(--muted)}
 @media (max-width:640px){.adm-next .btn{flex:1 1 100%;justify-content:center}}
+
+/* ===== แท็บยี่ห้อที่เคยเพิ่มไว้ (ฟอร์มสินค้า) ===== */
+.adm-brands{display:grid;gap:8px}
+.adm-brands-t{font-size:13px;color:var(--muted)}
+.adm-brands-l{display:flex;gap:8px;flex-wrap:wrap;max-height:148px;overflow-y:auto;padding:2px}
+.adm-chip{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:600;cursor:pointer;color:#374151}
+.adm-chip:hover{border-color:var(--blue)}
+.adm-chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.adm-chip.t-new.on{background:var(--c-blue);border-color:var(--c-blue)}
+.adm-chip.t-used.on{background:var(--c-green);border-color:var(--c-green)}
+.adm-chip.t-wheel.on{background:var(--c-purple);border-color:var(--c-purple)}

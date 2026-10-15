@@ -93,10 +93,9 @@ export default function ProductsManager({
     );
   }
 
-  // อยู่แท็บประเภทใดอยู่ กดเพิ่มแล้วเข้าฟอร์มประเภทนั้นเลย / แท็บทั้งหมดหรือยังไม่มีสินค้า ให้เลือกประเภทก่อน
+  // กดเพิ่มสินค้าแล้วให้เลือกประเภทก่อนทุกครั้ง (ไม่ว่าอยู่แท็บไหน) แล้วจึงเข้าฟอร์มของประเภทนั้น
   function onAdd() {
-    if (tab === "all") setPicking((v) => !v);
-    else setEditing(tab);
+    setPicking((v) => !v);
   }
 
   return (
@@ -130,19 +129,22 @@ export default function ProductsManager({
           </>
         )}
         <button className="btn btn-dark" type="button" onClick={onAdd} style={items.length === 0 ? undefined : { marginLeft: "auto" }}>
-          {tab === "all" ? "+ เพิ่มสินค้า" : `+ เพิ่ม${typeLabel(tab)}`}
+          + เพิ่มสินค้า
         </button>
       </div>
 
-      {picking && tab === "all" && (
-        <div className="adm-pick" role="group" aria-label="เลือกประเภทสินค้าที่จะเพิ่ม">
-          {PRODUCT_TYPES.map((t) => (
-            <button key={t.value} type="button" className={`adm-pick-c ${CLS[t.value]}`} onClick={() => { setPicking(false); setEditing(t.value); }}>
-              <b>{t.label}</b>
-              <span>เพิ่มสินค้าประเภทนี้</span>
-            </button>
-          ))}
-        </div>
+      {picking && (
+        <>
+          <p className="adm-sub" style={{ margin: "0 0 8px" }}>เลือกประเภทสินค้าที่จะเพิ่ม</p>
+          <div className="adm-pick" role="group" aria-label="เลือกประเภทสินค้าที่จะเพิ่ม">
+            {PRODUCT_TYPES.map((t) => (
+              <button key={t.value} type="button" className={`adm-pick-c ${CLS[t.value]}`} onClick={() => { setPicking(false); setEditing(t.value); }}>
+                <b>{t.label}</b>
+                <span>เพิ่มสินค้าประเภทนี้</span>
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {err && <p className="adm-msg err" style={{ marginBottom: 12 }}>{err}</p>}
