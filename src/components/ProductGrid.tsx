@@ -11,10 +11,9 @@ function orderText(p: Product): string {
     `สินค้า: ${p.brand_name} ${p.name}${p.model ? ` ${p.model}` : ""}`,
     size ? `ขนาด: ${size}` : "",
     `ราคา: ${price} บาท`,
-    p.in_stock ? "จำนวน: 1" : "",
+    "จำนวน: 1",
   ].filter(Boolean).join("\n");
-  const hello = p.in_stock ? "สวัสดีครับ/ค่ะ สนใจสั่งซื้อสินค้านี้" : "สวัสดีครับ/ค่ะ ขอสอบถามสินค้านี้";
-  return [hello, detail, "รบกวนแจ้งรายละเอียดและวิธีชำระเงินด้วยครับ/ค่ะ"].join("\n\n");
+  return `สนใจสั่งซื้อสินค้านี้\n\n${detail}`;
 }
 
 export default async function ProductGrid({ items, error, filtered }: {
@@ -23,7 +22,6 @@ export default async function ProductGrid({ items, error, filtered }: {
   if (error) return <p className="note">{error}</p>;
   if (!items.length) return <p className="note">{filtered ? "ไม่พบสินค้าที่ตรงกับเงื่อนไข" : "ยังไม่มีสินค้า"}</p>;
   const { settings } = await getSite();
-  const line = t(settings.line_url);
   const messenger = t(settings.messenger_url);
   return (
     <div className="grid">
@@ -38,16 +36,9 @@ export default async function ProductGrid({ items, error, filtered }: {
             <small>{p.size_label}{p.load_index ? ` ${p.load_index}${p.speed_rating ?? ""}` : ""}</small>
             <div className="price">฿{Number(p.sale_price).toLocaleString("th-TH")}</div>
             {!p.in_stock && <span className="tag">สินค้าหมดชั่วคราว</span>}
-            {(messenger || line) && (
+            {p.in_stock && messenger && (
               <div className="card-act">
-                {messenger && (
-                  <OrderLink
-                    href={messengerOrderUrl(messenger, text)}
-                    text={text}
-                    label={p.in_stock ? "สั่งซื้อทาง Messenger" : "สอบถามทาง Messenger"}
-                  />
-                )}
-                {line && <a className="btn btn-brand" href={line}>สอบถามทาง LINE</a>}
+                <OrderLink href={messengerOrderUrl(messenger, text)} text={text} label="สั่งซื้อ" />
               </div>
             )}
           </div>

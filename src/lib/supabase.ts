@@ -57,7 +57,7 @@ export const getSite = cache(async () => {
 export async function getProducts(f: { w?: number; a?: number; r?: number; c?: string; limit?: number }) {
   const sb = client();
   if (!sb) return { data: [] as Product[], error: "ยังไม่ได้ตั้งค่า Supabase (.env.local)" };
-  let q = sb.from("products_public").select("*").order("sale_price");
+  let q = sb.from("products_public").select("*").order("in_stock", { ascending: false }).order("sale_price"); // สินค้าพร้อมขายก่อน เรียงราคาน้อยไปมาก สินค้าหมดไปท้ายสุด
   if (f.w) q = q.eq("width_mm", f.w);
   if (f.a) q = q.eq("aspect_ratio", f.a);
   if (f.r) q = q.eq("rim_inch", f.r);
