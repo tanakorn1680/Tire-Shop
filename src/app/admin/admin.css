@@ -227,7 +227,6 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-pop-link:hover{background:#e8f1fe}
 
 /* เพิ่ม/ลบประเภท-ยี่ห้อในแผงที่เลื่อนออกมา */
-.adm-pop.has-add{max-height:min(340px,60vh)}
 .adm-pop-t.err{color:#b42318;background:#fff4f2}
 .adm-pop-row{display:flex;align-items:stretch;border-bottom:1px solid #eef1f5}
 .adm-pop-row .adm-pop-o{flex:1;min-width:0;border-bottom:none}
@@ -235,6 +234,3 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-pop-del:hover{background:#fff4f2}
 .adm-pop-del:disabled{opacity:.5;cursor:default}
 .adm-pop-del svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.adm-pop-add{position:sticky;bottom:0;display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;background:#f3f8ff;border-top:1px solid #dbe3ee}
-.adm-combo .adm-pop-add input,.adm-combo .adm-pop-add select{flex:1 1 150px;min-width:0;min-height:46px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:#fff;font:inherit;font-size:16px}
-.adm-pop-add .btn{flex:1 1 100%;justify-content:center}

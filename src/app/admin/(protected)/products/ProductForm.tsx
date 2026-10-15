@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
 import {
-  PRODUCT_COLUMNS, PRODUCT_TYPES, dotText, findBrand, parseDot, typeLabel, typeUnit,
+  PRODUCT_COLUMNS, dotText, findBrand, parseDot, typeLabel, typeUnit,
   type AdminProduct, type Category, type Named, type ProductType,
 } from "@/lib/product-meta";
 
@@ -59,6 +59,8 @@ export default function ProductForm({
   const [catList, setCatList] = useState(categories);
   const [brandList, setBrandList] = useState(brands);
   const chosen = catList.find((c) => c.id === categoryId);
+  // ข้อความในช่องประเภทสินค้า (พิมพ์ค้นหา/พิมพ์ชื่อใหม่ได้ในช่องเดียวกัน)
+  const [catText, setCatText] = useState(() => categories.find((c) => c.id === (product?.category_id ?? ""))?.name ?? "");
   const type: ProductType = product?.product_type ?? chosen?.product_type ?? "new_tire";
   const typeChoices = product ? catList.filter((c) => c.product_type === product.product_type) : catList;
   const title = chosen?.name ?? (product ? typeLabel(product.product_type) : "สินค้า");
@@ -82,11 +84,14 @@ export default function ProductForm({
 
   // แผงเลือกประเภทสินค้า (เฉพาะตอนเพิ่มใหม่)
   const [typeOpen, setTypeOpen] = useState(false);
+  const typeInput = useRef<HTMLInputElement>(null);
   function pickType(c: Category) {
     const v = c.product_type;
     const wasUsed = type === "used_tire";
     setCategoryId(c.id);
+    setCatText(c.name);
     setTypeOpen(false);
+    typeInput.current?.blur();
     if (product) return;
     setForm((f) => ({
       ...f,
@@ -115,9 +120,6 @@ export default function ProductForm({
   const typeBox = useRef<HTMLDivElement>(null);
   const [popMsg, setPopMsg] = useState<string | null>(null);
   const [popBusy, setPopBusy] = useState(false);
-  const [newCat, setNewCat] = useState("");
-  const [newKind, setNewKind] = useState<ProductType | "">(""); // เว้นว่างไว้ให้แอดมินเลือกเอง
-  const kindForNew: ProductType | "" = product ? product.product_type : newKind;
 
   useEffect(() => { setPopMsg(null); }, [typeOpen, brandOpen]);
   // ปิดแผงเมื่อแตะ/โฟกัสนอกแผง
@@ -136,20 +138,20 @@ export default function ProductForm({
     };
   }, [typeOpen, brandOpen]);
 
-  async function addCategory() {
-    const n = newCat.trim().replace(/\s+/g, " ");
-    if (!n || !kindForNew || popBusy) return;
-    if (catList.some((c) => c.name.toLowerCase() === n.toLowerCase())) return setPopMsg("มีประเภทนี้อยู่แล้ว");
+  async function addCategory(raw: string) {
+    const n = raw.trim().replace(/\s+/g, " ");
+    if (!n || popBusy) return;
+    const ex = catList.find((c) => c.name.toLowerCase() === n.toLowerCase());
+    if (ex) return pickType(ex);
     setPopBusy(true);
     setPopMsg(null);
     const { data, error } = await sb().from("categories")
-      .insert({ name: n, sort_order: catList.length, product_type: kindForNew })
+      .insert({ name: n, sort_order: catList.length, product_type: product ? product.product_type : "new_tire" })
       .select("id,name,product_type").single();
     setPopBusy(false);
     if (error || !data) return setPopMsg(error?.code === "23505" ? "มีประเภทนี้อยู่แล้ว" : "เพิ่มไม่สำเร็จ ลองใหม่อีกครั้ง");
     const c = data as Category;
     setCatList((xs) => [...xs, c]);
-    setNewCat("");
     pickType(c);
     router.refresh();
   }
@@ -162,7 +164,7 @@ export default function ProductForm({
     setPopBusy(false);
     if (error) return setPopMsg("ลบไม่ได้ อาจมีสินค้าใช้ประเภทนี้อยู่");
     setCatList((xs) => xs.filter((x) => x.id !== c.id));
-    if (categoryId === c.id) setCategoryId("");
+    if (categoryId === c.id) { setCategoryId(""); setCatText(""); }
     router.refresh();
   }
 
@@ -216,6 +218,7 @@ export default function ProductForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    if (catText.trim() && !chosen) return setErr('ประเภทสินค้านี้ยังไม่ได้เพิ่ม กดปุ่ม "+ เพิ่มประเภท" ในช่องประเภทสินค้าก่อน');
     if (!chosen && !product) return setErr("กรุณาเลือกประเภทสินค้า (ถ้ายังไม่มี เพิ่มได้ในช่องประเภทสินค้า)");
 
     const width_mm = optNum(form.width_mm), aspect_ratio = optNum(form.aspect_ratio), rim_inch = optNum(form.rim_inch);
@@ -307,6 +310,11 @@ export default function ProductForm({
   }
 
   const img = imageUrl(imagePath);
+  const typedCat = catText.trim().replace(/\s+/g, " ");
+  // ระหว่างพิมพ์ แสดงเฉพาะประเภทที่ตรงกับตัวอักษรที่พิมพ์
+  const catChoices = typedCat && !chosen
+    ? typeChoices.filter((c) => c.name.toLowerCase().includes(typedCat.toLowerCase()))
+    : typeChoices;
   const typedBrand = form.brand.trim().replace(/\s+/g, " ");
   const pickedBrand = typedBrand ? findBrand(brandList, form.brand) : undefined;
   // ระหว่างพิมพ์ แสดงเฉพาะยี่ห้อที่ตรงกับตัวอักษรที่พิมพ์ (ถ้ายังไม่พิมพ์แสดงทั้งหมด)
@@ -331,78 +339,70 @@ export default function ProductForm({
 
       <fieldset className="adm-fs">
         <legend>ข้อมูลสินค้า</legend>
-        {(
-          <div className="adm-f" style={{ marginBottom: 12 }}>
-            <label htmlFor="type-input">ประเภทสินค้า *</label>
-            <div className={`adm-combo ${TYPE_CLS[type]} ${typeOpen ? "open" : ""}`} ref={typeBox}>
-              <input
-                id="type-input"
-                value={chosen?.name ?? ""}
-                placeholder="แตะเพื่อเลือกประเภทสินค้า"
-                readOnly
-                inputMode="none"
-                onClick={() => { setBrandOpen(false); setTypeOpen((v) => !v); }}
-                onKeyDown={(e) => { if (e.key === "Escape") setTypeOpen(false); }}
-                style={{ cursor: "pointer" }}
-                role="combobox"
-                aria-expanded={typeOpen}
-                aria-controls="type-pop"
-              />
-              <button
-                type="button"
-                className="adm-combo-arrow"
-                tabIndex={-1}
-                aria-label={typeOpen ? "ปิดรายการประเภท" : "เปิดรายการประเภท"}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => { setBrandOpen(false); setTypeOpen((v) => !v); }}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-              </button>
-              {typeOpen && (
-                <div id="type-pop" className="adm-pop has-add" role="listbox">
-                  {popMsg && <span className="adm-pop-t err">{popMsg}</span>}
-                  {typeChoices.map((o) => (
-                    <div className="adm-pop-row" key={o.id}>
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={o.id === categoryId}
-                        className={`adm-pop-o ${o.id === categoryId ? "on" : ""}`}
-                        onClick={() => pickType(o)}
-                      >
-                        <span>{o.name}</span>
-                        {o.id === categoryId && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+        <div className="adm-f" style={{ marginBottom: 12 }}>
+          <label htmlFor="type-input">ประเภทสินค้า *</label>
+          <div className={`adm-combo ${TYPE_CLS[type]} ${typeOpen ? "open" : ""}`} ref={typeBox}>
+            <input
+              id="type-input"
+              ref={typeInput}
+              value={catText}
+              onChange={(e) => {
+                const v = e.target.value;
+                setCatText(v);
+                setCategoryId(typeChoices.find((c) => c.name.toLowerCase() === v.trim().replace(/\s+/g, " ").toLowerCase())?.id ?? "");
+                setBrandOpen(false);
+                setTypeOpen(true);
+              }}
+              onFocus={() => { setBrandOpen(false); setTypeOpen(true); }}
+              onKeyDown={(e) => { if (e.key === "Escape") setTypeOpen(false); }}
+              placeholder="แตะเพื่อเลือก หรือพิมพ์ประเภทใหม่"
+              autoComplete="off"
+              role="combobox"
+              aria-expanded={typeOpen}
+              aria-controls="type-pop"
+            />
+            <button
+              type="button"
+              className="adm-combo-arrow"
+              tabIndex={-1}
+              aria-label={typeOpen ? "ปิดรายการประเภท" : "เปิดรายการประเภท"}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { if (typeOpen) { setTypeOpen(false); typeInput.current?.blur(); } else typeInput.current?.focus(); }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+            {typeOpen && (
+              <div id="type-pop" className="adm-pop" role="listbox">
+                {popMsg && <span className="adm-pop-t err">{popMsg}</span>}
+                {typedCat && !chosen && (
+                  <button type="button" className="adm-pop-new" disabled={popBusy} onClick={() => addCategory(typedCat)}>
+                    + เพิ่มประเภท "{typedCat}"
+                  </button>
+                )}
+                {catChoices.map((o) => (
+                  <div className="adm-pop-row" key={o.id}>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={o.id === categoryId}
+                      className={`adm-pop-o ${o.id === categoryId ? "on" : ""}`}
+                      onClick={() => pickType(o)}
+                    >
+                      <span>{o.name}</span>
+                      {o.id === categoryId && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+                    </button>
+                    {canDelete && (
+                      <button type="button" className="adm-pop-del" aria-label={`ลบประเภท ${o.name}`} disabled={popBusy} onClick={() => removeCategory(o)}>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3" /></svg>
                       </button>
-                      {canDelete && (
-                        <button type="button" className="adm-pop-del" aria-label={`ลบประเภท ${o.name}`} disabled={popBusy} onClick={() => removeCategory(o)}>
-                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12h10l1-12M9 7V4h6v3" /></svg>
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {typeChoices.length === 0 && <span className="adm-pop-t">ยังไม่มีประเภทสินค้า เพิ่มได้ด้านล่าง</span>}
-                  <div className="adm-pop-add">
-                    <input
-                      value={newCat}
-                      onChange={(e) => setNewCat(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }}
-                      placeholder="ชื่อประเภทใหม่ เช่น ยางรถเก๋ง"
-                      aria-label="ชื่อประเภทสินค้าใหม่"
-                      autoComplete="off"
-                    />
-                    {!product && (
-                      <select value={newKind} onChange={(e) => setNewKind(e.target.value as ProductType)} aria-label="แบบฟอร์มกรอกข้อมูลของประเภทนี้">
-                        <option value="" disabled>เลือกแบบฟอร์มกรอกข้อมูล</option>
-                        {PRODUCT_TYPES.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
-                      </select>
                     )}
-                    <button type="button" className="btn btn-dark" disabled={popBusy || !newCat.trim() || !kindForNew} onClick={addCategory}>+ เพิ่มประเภท</button>
                   </div>
-                </div>
-              )}
-            </div>
+                ))}
+                {catChoices.length === 0 && !typedCat && <span className="adm-pop-t">ยังไม่มีประเภทสินค้า พิมพ์ชื่อในช่องด้านบน แล้วกด "เพิ่มประเภท"</span>}
+              </div>
+            )}
           </div>
-        )}
+        </div>
         <div className="adm-f-row">
           <div className="adm-f">
             <label htmlFor="brand-input">ยี่ห้อ *</label>
