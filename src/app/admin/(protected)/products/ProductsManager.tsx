@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
 import {
-  PRODUCT_TYPES, baht, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
+  PRODUCT_TYPES, baht, isLowStock, matchesQuery, sortBrandsByUse, specText, typeLabel, typeUnit,
   type AdminProduct, type Named, type ProductType,
 } from "@/lib/product-meta";
 import ProductForm from "./ProductForm";
@@ -15,15 +15,30 @@ const PAGE = 50;
 const CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
 
 export default function ProductsManager({
-  initial, brands, canDelete, initialTab, initialQ,
+  initial, brands, canDelete, initialTab, initialQ, initialAdd,
 }: {
   initial: AdminProduct[]; brands: Named[];
   canDelete: boolean; initialTab: ProductType | "all"; initialQ: string;
+  initialAdd: ProductType | "pick" | null; // มาจากปุ่มเพิ่มสินค้าที่หน้าหลัก: เปิดฟอร์มเลย หรือเปิดตัวเลือกประเภท
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
-  const [editing, setEditing] = useState<AdminProduct | ProductType | null>(null); // ProductType = เพิ่มใหม่
-  const [picking, setPicking] = useState(false); // แสดงการ์ดเลือกประเภท หลังกด "เพิ่มสินค้า"
+  const [editing, setEditing] = useState<AdminProduct | ProductType | null>(
+    initialAdd && initialAdd !== "pick" ? initialAdd : null, // ProductType = เพิ่มใหม่
+  );
+  const [picking, setPicking] = useState(initialAdd === "pick"); // แสดงการ์ดเลือกประเภท หลังกด "เพิ่มสินค้า"
+  const [newBrands, setNewBrands] = useState<Named[]>([]); // ยี่ห้อที่เพิ่งเพิ่มจากฟอร์ม (ก่อนหน้า server โหลดใหม่)
+
+  // เคลียร์ ?add= ออกจาก URL เพื่อไม่ให้รีเฟรชแล้วเปิดฟอร์มซ้ำ
+  useEffect(() => {
+    if (initialAdd) window.history.replaceState(null, "", "/admin/products");
+  }, [initialAdd]);
+
+  // ยี่ห้อทั้งหมดสำหรับฟอร์ม เรียงตัวที่ใช้บ่อยขึ้นก่อน
+  const brandList = useMemo(() => {
+    const all = [...brands, ...newBrands.filter((n) => !brands.some((b) => b.id === n.id))];
+    return sortBrandsByUse(all, items);
+  }, [brands, newBrands, items]);
   const [tabRaw, setTab] = useState<ProductType | "all">(initialTab);
   const [q, setQ] = useState(initialQ);
   const [lowOnly, setLowOnly] = useState(false);
@@ -84,7 +99,8 @@ export default function ProductsManager({
       <ProductForm
         product={isNew ? null : editing}
         newType={isNew ? editing : undefined}
-        brands={brands}
+        brands={brandList}
+        onBrandAdded={(b) => setNewBrands((xs) => [...xs, b])}
         onDone={(saved) => {
           if (saved) { upsertLocal(saved); router.refresh(); }
           setEditing(null);

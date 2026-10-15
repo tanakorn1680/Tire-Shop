@@ -9,9 +9,9 @@ type ProductRow = Omit<AdminProduct, "brand_name"> & { brands: { name: string } 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; q?: string }>;
+  searchParams: Promise<{ type?: string; q?: string; add?: string }>;
 }) {
-  const { type, q } = await searchParams;
+  const { type, q, add } = await searchParams;
   const { role } = await getAdminUser();
   const supabase = await sbServer();
   const [products, brands] = await Promise.all([
@@ -48,6 +48,7 @@ export default async function ProductsPage({
           canDelete={role === "owner"}
           initialTab={isProductType(type) ? type : "all"}
           initialQ={q ?? ""}
+          initialAdd={isProductType(add) ? add : add === "pick" ? "pick" : null}
         />
       )}
     </>

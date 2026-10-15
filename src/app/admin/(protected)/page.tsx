@@ -74,18 +74,32 @@ export default async function AdminHome() {
           <div className="adm-start-acts">
             {hasBrand ? (
               <>
-                <Link href="/admin/products" className="btn btn-dark">เพิ่มสินค้า</Link>
+                <Link href="/admin/products?add=pick" className="btn btn-dark">เพิ่มสินค้า</Link>
                 <Link href="/admin/brands" className="btn btn-ghost">จัดการยี่ห้อ</Link>
               </>
             ) : (
               <>
                 <Link href="/admin/brands" className="btn btn-dark">เพิ่มยี่ห้อ</Link>
-                <Link href="/admin/products" className="btn btn-ghost">ข้ามไปเพิ่มสินค้าเลย</Link>
+                <Link href="/admin/products?add=pick" className="btn btn-ghost">ข้ามไปเพิ่มสินค้าเลย</Link>
               </>
             )}
           </div>
           {!hasBrand && <p className="adm-hint" style={{ marginTop: 10 }}>ถ้าข้ามขั้นตอนยี่ห้อ พิมพ์ชื่อยี่ห้อในฟอร์มสินค้าได้เลย ระบบจะเพิ่มยี่ห้อให้เอง</p>}
         </div>
+      )}
+
+      {rows.length > 0 && (
+        <section className="adm-quick" aria-label="เพิ่มสินค้า">
+          <h2>+ เพิ่มสินค้าใหม่</h2>
+          <div className="adm-quick-g">
+            {PRODUCT_TYPES.map((t, i) => (
+              <Link key={t.value} href={`/admin/products?add=${t.value}`} className={`adm-quick-b ${["t-new", "t-used", "t-wheel"][i]}`}>
+                <span aria-hidden="true">+</span>
+                <b>{t.label}</b>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {rows.length > 0 && (
