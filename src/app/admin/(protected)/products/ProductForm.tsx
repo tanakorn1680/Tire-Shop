@@ -202,7 +202,11 @@ export default function ProductForm({
             <datalist id="brand-list">
               {brands.map((b) => <option key={b.id} value={b.name} />)}
             </datalist>
-            {brands.length === 0 && <span className="adm-hint">ยังไม่มียี่ห้อในระบบ พิมพ์ชื่อได้เลย ระบบจะเพิ่มให้อัตโนมัติ</span>}
+            {form.brand.trim() && !findBrand(brands, form.brand) ? (
+              <span className="adm-hint">ยี่ห้อใหม่ ระบบจะเพิ่ม "{form.brand.trim().replace(/\s+/g, " ")}" ให้เมื่อกดบันทึก</span>
+            ) : brands.length === 0 ? (
+              <span className="adm-hint">ยังไม่มียี่ห้อในระบบ พิมพ์ชื่อได้เลย ระบบจะเพิ่มให้อัตโนมัติ</span>
+            ) : null}
           </label>
           <label className="adm-f">ชื่อรุ่น *
             <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder={isWheel ? "เช่น Enkei RPF1" : "เช่น Primacy 4"} />

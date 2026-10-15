@@ -11,11 +11,12 @@ type Row = {
 
 export default async function AdminHome() {
   const supabase = await sbServer();
-  const [products] = await Promise.all([
+  const [products, brands] = await Promise.all([
     supabase
       .from("products")
       .select("id,name,product_type,is_active,is_individual,stock_qty,low_stock_threshold,cost_price,brands(name)")
       .returns<Row[]>(),
+    supabase.from("brands").select("id", { count: "exact", head: true }),
   ]);
 
   if (products.error) {
@@ -36,7 +37,10 @@ export default async function AdminHome() {
     .filter((r) => r.is_active && !r.is_individual && r.stock_qty <= r.low_stock_threshold)
     .sort((a, b) => a.stock_qty - b.stock_qty);
 
+  // ยังไม่มีสินค้า = แสดงบทเริ่มต้นใช้งาน ขั้นตอนปรับตามที่ทำไปแล้ว (มียี่ห้อหรือยัง)
   const needsSetup = rows.length === 0;
+  const brandCount = brands.count ?? 0;
+  const hasBrand = brandCount > 0;
 
   return (
     <>
@@ -50,13 +54,37 @@ export default async function AdminHome() {
       {needsSetup && (
         <div className="adm-card adm-start">
           <h2>เริ่มต้นใช้งาน</h2>
-          <p className="adm-sub" style={{ margin: "4px 0 12px" }}>ยังไม่มียี่ห้อหรือสินค้าในระบบ ทำตาม 3 ขั้นตอนนี้ได้เลย</p>
+          <p className="adm-sub" style={{ margin: "4px 0 12px" }}>
+            {hasBrand ? `มี ${brandCount.toLocaleString("th-TH")} ยี่ห้อแล้ว ขั้นต่อไปคือเพิ่มสินค้า` : "ยังไม่มียี่ห้อและสินค้าในระบบ ทำตาม 2 ขั้นตอนนี้ได้เลย"}
+          </p>
           <ol className="adm-steps">
-            <li><b>กด "เพิ่มสินค้า"</b><span>ที่หน้าสินค้าและสต็อก แล้วเลือกประเภท ยางมือหนึ่ง ยางมือสอง หรือ ล้อแม็ก</span></li>
-            <li><b>กรอกข้อมูลที่จำเป็น</b><span>ยี่ห้อ ชื่อรุ่น ขนาด ราคาทุน ราคาขาย และจำนวน ยี่ห้อพิมพ์ได้เลย ระบบเพิ่มให้เอง</span></li>
-            <li><b>กดบันทึก</b><span>รายละเอียดอื่น เช่น รหัสสินค้า ตำแหน่งจัดเก็บ กรอกทีหลังได้</span></li>
+            <li className={hasBrand ? "done" : ""}>
+              <b>{hasBrand ? "เพิ่มยี่ห้อแล้ว" : "เพิ่มยี่ห้อ"}</b>
+              <span>
+                {hasBrand
+                  ? "เพิ่มยี่ห้ออื่นหรือแก้ชื่อได้ที่หน้ายี่ห้อ"
+                  : "เช่น Michelin, Bridgestone เพิ่มได้ทีละหลายยี่ห้อ"}
+              </span>
+            </li>
+            <li>
+              <b>เพิ่มสินค้า</b>
+              <span>เลือกประเภท ยางมือหนึ่ง ยางมือสอง หรือ ล้อแม็ก แล้วกรอกยี่ห้อ รุ่น ขนาด ราคา และจำนวน รายละเอียดอื่นกรอกทีหลังได้</span>
+            </li>
           </ol>
-          <Link href="/admin/products" className="btn btn-dark" style={{ marginTop: 14 }}>ไปหน้าสินค้าและสต็อก</Link>
+          <div className="adm-start-acts">
+            {hasBrand ? (
+              <>
+                <Link href="/admin/products" className="btn btn-dark">เพิ่มสินค้า</Link>
+                <Link href="/admin/brands" className="btn btn-ghost">จัดการยี่ห้อ</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/admin/brands" className="btn btn-dark">เพิ่มยี่ห้อ</Link>
+                <Link href="/admin/products" className="btn btn-ghost">ข้ามไปเพิ่มสินค้าเลย</Link>
+              </>
+            )}
+          </div>
+          {!hasBrand && <p className="adm-hint" style={{ marginTop: 10 }}>ถ้าข้ามขั้นตอนยี่ห้อ พิมพ์ชื่อยี่ห้อในฟอร์มสินค้าได้เลย ระบบจะเพิ่มยี่ห้อให้เอง</p>}
         </div>
       )}
 

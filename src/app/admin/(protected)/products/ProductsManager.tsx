@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
@@ -146,8 +147,20 @@ export default function ProductsManager({
 
       {err && <p className="adm-msg err" style={{ marginBottom: 12 }}>{err}</p>}
 
-      {filtered.length === 0 ? (
-        <p className="adm-empty">{items.length === 0 ? "ยังไม่มียี่ห้อหรือสินค้า เริ่มต้นใหม่ได้เลย: กด \"เพิ่มสินค้า\" เลือกประเภท แล้วกรอกข้อมูล" : "ไม่พบสินค้าที่ตรงกับการค้นหา"}</p>
+      {items.length === 0 ? (
+        <div className="adm-empty">
+          <p>ยังไม่มีสินค้า กด "+ เพิ่มสินค้า" แล้วเลือกประเภทได้เลย</p>
+          <p style={{ marginTop: 8 }}>
+            {brands.length === 0
+              ? "ยี่ห้อพิมพ์ในฟอร์มสินค้าได้เลย ระบบจะเพิ่มให้เอง หรือจะเพิ่มยี่ห้อไว้ก่อนก็ได้"
+              : `มี ${brands.length.toLocaleString("th-TH")} ยี่ห้อพร้อมให้เลือกในฟอร์มสินค้า`}
+          </p>
+          <div style={{ marginTop: 12 }}>
+            <Link href="/admin/brands" className="btn btn-ghost">{brands.length === 0 ? "เพิ่มยี่ห้อก่อน" : "จัดการยี่ห้อ"}</Link>
+          </div>
+        </div>
+      ) : filtered.length === 0 ? (
+        <p className="adm-empty">ไม่พบสินค้าที่ตรงกับการค้นหา</p>
       ) : (
         <>
           <p className="adm-sub">แสดง {shown.length} จาก {filtered.length} รายการ</p>
