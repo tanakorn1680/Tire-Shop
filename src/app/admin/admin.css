@@ -1,0 +1,69 @@
+/* ===== Admin shell ===== */
+.adm{min-height:100vh;background:#f6f6f8}
+.adm-hdr{background:var(--dark);color:#fff;position:sticky;top:0;z-index:20}
+.adm-hdr-in{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:20px;height:56px}
+.adm-brand{font-weight:700;font-size:15px}
+.adm-nav-d{display:flex;gap:4px;margin-left:auto;font-size:14px}
+.adm-nav-d a{padding:8px 14px;border-radius:8px;color:#ccc}
+.adm-nav-d a:hover{color:#fff}
+.adm-nav-d a.on{background:var(--brand);color:#1a1a1a;font-weight:700}
+.adm-hdr-r{display:flex;align-items:center;gap:12px;font-size:13px;color:#ccc}
+.adm-signout{background:none;border:1px solid #444;color:#ccc;border-radius:8px;padding:7px 14px;font:inherit;cursor:pointer}
+.adm-signout:hover{border-color:#777;color:#fff}
+.adm-nav-m{display:none;position:relative;margin-left:auto}
+.adm-nav-m summary{list-style:none;font-size:22px;cursor:pointer}
+.adm-nav-m > div{position:absolute;right:0;top:40px;background:var(--dark);border-radius:10px;padding:8px;min-width:180px;display:grid;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.adm-nav-m a,.adm-nav-m button{padding:10px 14px;text-align:left;color:#eee;background:none;border:none;font:inherit;cursor:pointer;border-radius:6px}
+.adm-nav-m a.on{background:var(--brand);color:#1a1a1a;font-weight:700}
+@media(max-width:820px){.adm-nav-d,.adm-hdr-r{display:none}.adm-nav-m{display:block}}
+.adm-main{max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+
+/* ===== Page header ===== */
+.adm-pg-hd{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.adm-pg-hd h1{font-size:19px}
+.adm-pg-hd p{color:var(--muted);font-size:13px;margin-top:2px}
+
+/* ===== Cards / auth ===== */
+.adm-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px}
+.adm-auth{min-height:100vh;display:grid;place-items:center;background:#f6f6f8;padding:20px}
+.adm-auth-card{width:100%;max-width:360px;display:grid;gap:14px}
+.adm-auth-card h1{font-size:18px;text-align:center;margin-bottom:4px}
+.adm-err{color:#b42318;font-size:13px}
+
+/* ===== Forms ===== */
+.adm-f{display:grid;gap:6px;font-size:13px;color:#374151}
+.adm-f input,.adm-f select,.adm-f textarea{padding:10px 12px;border:1px solid var(--line);border-radius:9px;font:inherit;background:#fff;width:100%}
+.adm-f textarea{resize:vertical;min-height:70px}
+.adm-f-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px}
+.adm-form{display:grid;gap:14px}
+.adm-chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#374151}
+.adm-chk input{width:auto}
+.adm-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+.btn-ghost{background:#fff;border:1px solid var(--line);color:#374151}
+.btn-danger{background:#fff;border:1px solid #f0b8b0;color:#b42318}
+.btn-danger:hover{background:#fff4f2}
+.btn-sm{padding:7px 14px;font-size:13px;border-radius:8px}
+
+/* ===== Table / list ===== */
+.adm-list{display:grid;gap:10px}
+.adm-row{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.adm-row-main{flex:1;min-width:160px}
+.adm-row-main b{display:block;font-size:14px}
+.adm-row-main small{color:var(--muted);font-size:12px}
+.adm-row-tag{font-size:11px;padding:3px 9px;border-radius:999px;background:#f0f0f3;color:var(--muted);font-weight:600}
+.adm-row-tag.off{background:#fde8e6;color:#b42318}
+.adm-row-actions{display:flex;gap:8px}
+.adm-empty{background:#fff;border:1px dashed #ccc;border-radius:12px;padding:30px;text-align:center;color:var(--muted);font-size:14px}
+
+/* ===== Product thumbnail ===== */
+.adm-thumb{width:48px;height:48px;border-radius:8px;background:#f0f0f3;object-fit:contain;flex:none}
+
+/* ===== Toast / status message ===== */
+.adm-msg{font-size:13px;padding:10px 14px;border-radius:9px}
+.adm-msg.ok{background:#eafbe7;color:#1a7f37}
+.adm-msg.err{background:#fde8e6;color:#b42318}
+
+@media(max-width:600px){
+  .adm-row{padding:12px}
+  .adm-main{padding:18px 12px 50px}
+}
