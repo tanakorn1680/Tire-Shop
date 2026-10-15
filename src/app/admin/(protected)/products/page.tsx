@@ -21,7 +21,7 @@ export default async function ProductsPage({
       .order("created_at", { ascending: false })
       .returns<ProductRow[]>(),
     supabase.from("brands").select("id,name").order("name"),
-    supabase.from("categories").select("id,name").order("sort_order").order("name").returns<Category[]>(),
+    supabase.from("categories").select("id,name,product_type").order("sort_order").order("name").returns<Category[]>(),
   ]);
 
   const items: AdminProduct[] = (products.data ?? []).map(({ brands, ...p }) => ({
@@ -37,9 +37,9 @@ export default async function ProductsPage({
           <p>ราคาต้นทุนและจำนวนสต็อกจริงไม่แสดงบนหน้าเว็บลูกค้า</p>
         </div>
       </div>
-      {products.error ? (
+      {products.error || categories.error ? (
         <p className="adm-msg err">
-          โหลดสินค้าไม่สำเร็จ — ถ้าเพิ่งอัปเดตโค้ด ให้รัน migration 0004_product_types.sql ใน Supabase SQL Editor ก่อน
+          โหลดสินค้าไม่สำเร็จ — ถ้าเพิ่งอัปเดตโค้ด ให้รัน migration 0004_product_types.sql และ 0005_category_kind.sql ใน Supabase SQL Editor ก่อน
           (ข้อมูลเดิมยังอยู่ครบ ไม่ได้หายไป)
         </p>
       ) : (

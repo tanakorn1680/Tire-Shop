@@ -25,8 +25,8 @@ export type AdminProduct = {
   image_path: string | null; category_id: string | null; is_active: boolean;
 };
 export type Named = { id: string; name: string };
-// ประเภทสินค้าที่แอดมินเพิ่มเอง (เริ่มว่าง)
-export type Category = Named;
+// ประเภทสินค้าที่แอดมินเพิ่มเอง (product_type = รูปแบบฟอร์มกรอกข้อมูล)
+export type Category = { id: string; name: string; product_type: ProductType };
 
 // คอลัมน์ที่ดึงจากตาราง products (ใช้ซ้ำทั้งหน้ารายการและหลังบันทึก)
 export const PRODUCT_COLUMNS =
@@ -52,14 +52,21 @@ export function parseDot(input: string): { week: number; year: number } | null |
   return { week, year: 2000 + Number(s.slice(2)) };
 }
 
-// ข้อความสรุปขนาด/คุณสมบัติ ใช้ในรายการสินค้า (แสดงเฉพาะค่าที่กรอกไว้)
+// ข้อความสรุปขนาด/คุณสมบัติ ใช้ในรายการสินค้า
 export function specText(p: AdminProduct): string {
+  if (p.product_type === "wheel") {
+    const parts = [
+      p.rim_inch ? `${p.rim_inch} นิ้ว` : "",
+      p.wheel_width_in ? `กว้าง ${p.wheel_width_in}` : "",
+      p.wheel_bolts && p.wheel_pcd ? `${p.wheel_bolts} รู PCD ${p.wheel_pcd}` : p.wheel_pcd ? `PCD ${p.wheel_pcd}` : "",
+      p.wheel_offset_mm !== null && p.wheel_offset_mm !== undefined ? `ET ${p.wheel_offset_mm}` : "",
+    ];
+    return parts.filter(Boolean).join(" · ");
+  }
   const parts = [
-    p.size_label || (p.rim_inch ? `${p.rim_inch} นิ้ว` : ""),
-    p.wheel_width_in ? `กว้าง ${p.wheel_width_in}` : "",
-    p.wheel_bolts && p.wheel_pcd ? `${p.wheel_bolts} รู PCD ${p.wheel_pcd}` : p.wheel_pcd ? `PCD ${p.wheel_pcd}` : "",
-    p.wheel_offset_mm !== null && p.wheel_offset_mm !== undefined ? `ET ${p.wheel_offset_mm}` : "",
-    p.tread_depth_mm !== null && p.tread_depth_mm !== undefined ? `ดอก ${p.tread_depth_mm} มม.` : "",
+    p.size_label ?? "",
+    p.product_type === "used_tire" && p.tread_depth_mm !== null && p.tread_depth_mm !== undefined
+      ? `ดอก ${p.tread_depth_mm} มม.` : "",
     dotText(p.dot_week, p.dot_year) ? `DOT ${dotText(p.dot_week, p.dot_year)}` : "",
   ];
   return parts.filter(Boolean).join(" · ");
@@ -73,7 +80,7 @@ export function matchesQuery(p: AdminProduct, query: string): boolean {
   const tokens = query.toLowerCase().split(/\s+/).map(norm).filter(Boolean);
   if (tokens.length === 0) return true;
   const hay = norm(
-    [p.brand_name, p.name, p.model, p.sku, p.size_label, p.wheel_pcd, p.rim_inch ? `${p.rim_inch}` : ""]
+    [p.brand_name, p.name, p.model, p.sku, p.size_label, p.wheel_pcd, p.rim_inch ? `${p.rim_inch}` : "", typeLabel(p.product_type)]
       .filter(Boolean).join(" "),
   );
   return tokens.every((t) => hay.includes(t));
