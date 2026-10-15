@@ -223,7 +223,7 @@ export default function ProductForm({
         <div className="adm-f-row">
           <div className="adm-f">
             <label htmlFor="brand-input">ยี่ห้อ *</label>
-            <div className="adm-combo" ref={brandBox}>
+            <div className={`adm-combo ${TYPE_CLS[type]} ${brandOpen ? "open" : ""}`} ref={brandBox}>
               <input
                 id="brand-input"
                 ref={brandInput}
@@ -238,10 +238,21 @@ export default function ProductForm({
                 aria-expanded={brandOpen}
                 aria-controls="brand-pop"
               />
+              <button
+                type="button"
+                className="adm-combo-arrow"
+                tabIndex={-1}
+                aria-label={brandOpen ? "ปิดรายการยี่ห้อ" : "เปิดรายการยี่ห้อ"}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => { if (brandOpen) { setBrandOpen(false); brandInput.current?.blur(); } else brandInput.current?.focus(); }}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+              </button>
               {brandOpen && (
                 <div
                   id="brand-pop"
                   className="adm-pop"
+                  role="listbox"
                   onMouseDown={(e) => e.preventDefault()} // ไม่ให้ช่องเสียโฟกัสก่อนแตะเลือก
                 >
                   {typedBrand && !pickedBrand && (
@@ -249,29 +260,23 @@ export default function ProductForm({
                       + ใช้ยี่ห้อใหม่ "{typedBrand}"
                     </button>
                   )}
-                  {brandChoices.length > 0 ? (
-                    <>
-                      <span className="adm-pop-t">ยี่ห้อที่เคยเพิ่มไว้</span>
-                      <div className="adm-pop-l">
-                        {brandChoices.map((b) => {
-                          const on = pickedBrand?.id === b.id;
-                          return (
-                            <button
-                              key={b.id}
-                              type="button"
-                              className={`adm-chip ${TYPE_CLS[type]} ${on ? "on" : ""}`}
-                              aria-pressed={on}
-                              onClick={() => pickBrand(b.name)}
-                            >
-                              {b.name}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </>
-                  ) : !typedBrand ? (
-                    <span className="adm-pop-t">ยังไม่มียี่ห้อในระบบ พิมพ์ชื่อได้เลย ระบบจะเพิ่มให้อัตโนมัติ</span>
-                  ) : null}
+                  {brandChoices.map((b) => {
+                    const on = pickedBrand?.id === b.id;
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        role="option"
+                        aria-selected={on}
+                        className={`adm-pop-o ${on ? "on" : ""}`}
+                        onClick={() => pickBrand(b.name)}
+                      >
+                        <span>{b.name}</span>
+                        {on && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+                      </button>
+                    );
+                  })}
+                  {brandChoices.length === 0 && !typedBrand && <span className="adm-pop-t">พิมพ์ชื่อยี่ห้อได้เลย</span>}
                 </div>
               )}
             </div>
