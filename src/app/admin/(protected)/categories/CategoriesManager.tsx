@@ -3,15 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
-import { PRODUCT_TYPES, typeLabel, type ProductType } from "@/lib/product-meta";
 
-type Category = { id: string; name: string; sort_order: number; product_type: ProductType };
+type Category = { id: string; name: string; sort_order: number };
 
 export default function CategoriesManager({ initial, canDelete }: { initial: Category[]; canDelete: boolean }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const [name, setName] = useState("");
-  const [kind, setKind] = useState<ProductType>("new_tire");
   const [editing, setEditing] = useState<Category | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -24,8 +22,8 @@ export default function CategoriesManager({ initial, canDelete }: { initial: Cat
     setErr(null);
     const { data, error } = await sb()
       .from("categories")
-      .insert({ name: n, sort_order: items.length, product_type: kind })
-      .select("id,name,sort_order,product_type")
+      .insert({ name: n, sort_order: items.length })
+      .select("id,name,sort_order")
       .single();
     setBusy(false);
     if (error) {
@@ -75,12 +73,6 @@ export default function CategoriesManager({ initial, canDelete }: { initial: Cat
           <label className="adm-f">ชื่อประเภทสินค้าใหม่
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="เช่น ยางรถเก๋ง" />
           </label>
-          <label className="adm-f">ฟอร์มกรอกข้อมูลสินค้า
-            <select value={kind} onChange={(e) => setKind(e.target.value as ProductType)}>
-              {PRODUCT_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </select>
-            <span className="adm-hint">เลือกแบบฟอร์มที่ใช้กรอกสินค้าในประเภทนี้ (เปลี่ยนภายหลังไม่ได้)</span>
-          </label>
         </div>
         {err && <p className="adm-msg err">{err}</p>}
         <div className="adm-actions">
@@ -109,7 +101,7 @@ export default function CategoriesManager({ initial, canDelete }: { initial: Cat
                 </>
               ) : (
                 <>
-                  <div className="adm-row-main"><b>{c.name}</b><small>ฟอร์ม: {typeLabel(c.product_type)}</small></div>
+                  <div className="adm-row-main"><b>{c.name}</b></div>
                   <div className="adm-row-actions">
                     <button className="btn btn-ghost btn-sm" type="button" onClick={() => setEditing(c)}>แก้ไข</button>
                     {canDelete && (

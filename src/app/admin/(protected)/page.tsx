@@ -1,12 +1,12 @@
 import Link from "next/link";
 import AddProductHome from "./AddProductHome";
 import { sbServer } from "@/lib/supabase-server";
-import { PRODUCT_TYPES, baht, typeLabel, typeUnit, type Category, type ProductType } from "@/lib/product-meta";
+import { baht, type Category, type ProductType } from "@/lib/product-meta";
 
 export const dynamic = "force-dynamic";
 
 type Row = {
-  id: string; name: string; product_type: ProductType; is_active: boolean; is_individual: boolean;
+  id: string; name: string; category_id: string | null; product_type: ProductType; is_active: boolean; is_individual: boolean;
   stock_qty: number; low_stock_threshold: number; cost_price: number; brands: { name: string } | null;
 };
 
@@ -15,10 +15,10 @@ export default async function AdminHome() {
   const [products, brands, categories] = await Promise.all([
     supabase
       .from("products")
-      .select("id,name,product_type,is_active,is_individual,stock_qty,low_stock_threshold,cost_price,brands(name)")
+      .select("id,name,category_id,product_type,is_active,is_individual,stock_qty,low_stock_threshold,cost_price,brands(name)")
       .returns<Row[]>(),
     supabase.from("brands").select("id,name").order("name"),
-    supabase.from("categories").select("id,name,product_type").order("sort_order").order("name").returns<Category[]>(),
+    supabase.from("categories").select("id,name").order("sort_order").order("name").returns<Category[]>(),
   ]);
 
   if (products.error) {
@@ -33,7 +33,9 @@ export default async function AdminHome() {
   }
 
   const rows = products.data ?? [];
-  const qtyByType = (t: ProductType) => rows.filter((r) => r.product_type === t).reduce((n, r) => n + r.stock_qty, 0);
+  const cats = categories.data ?? [];
+  const qtyByCat = (id: string) => rows.filter((r) => r.category_id === id).reduce((n, r) => n + r.stock_qty, 0);
+  const catName = (id: string | null) => cats.find((c) => c.id === id)?.name ?? "";
   const stockValue = rows.reduce((n, r) => n + r.stock_qty * Number(r.cost_price), 0);
   const low = rows
     .filter((r) => r.is_active && !r.is_individual && r.stock_qty <= r.low_stock_threshold)
@@ -46,15 +48,13 @@ export default async function AdminHome() {
 
       {rows.length > 0 && (
         <div className="adm-stats">
-          {PRODUCT_TYPES.map((t, i) =>
-            rows.some((r) => r.product_type === t.value) ? (
-              <Link key={t.value} href={`/admin/products?type=${t.value}`} className={`adm-stat ${["c-blue", "c-green", "c-purple"][i]}`}>
-                <small>{t.label}</small>
-                <b>{qtyByType(t.value).toLocaleString("th-TH")}<span>{t.unit}</span></b>
-                <em>ดูรายละเอียด →</em>
-              </Link>
-            ) : null,
-          )}
+          {cats.filter((c) => rows.some((r) => r.category_id === c.id)).slice(0, 3).map((c, i) => (
+            <Link key={c.id} href="/admin/products" className={`adm-stat ${["c-blue", "c-green", "c-purple"][i]}`}>
+              <small>{c.name}</small>
+              <b>{qtyByCat(c.id).toLocaleString("th-TH")}<span>ชิ้น</span></b>
+              <em>ดูรายละเอียด →</em>
+            </Link>
+          ))}
           <Link href="/admin/products" className="adm-stat c-orange">
             <small>สินค้าทั้งหมด</small>
             <b>{rows.length.toLocaleString("th-TH")}<span>รายการ</span></b>
@@ -70,12 +70,12 @@ export default async function AdminHome() {
       ) : (
         <div className="adm-list">
           {low.slice(0, 10).map((r) => (
-            <Link key={r.id} href={`/admin/products?type=${r.product_type}`} className="adm-row">
+            <Link key={r.id} href="/admin/products" className="adm-row">
               <div className="adm-row-main">
                 <b>{r.brands?.name} {r.name}</b>
-                <small>{typeLabel(r.product_type)}</small>
+                <small>{catName(r.category_id)}</small>
               </div>
-              <span className="adm-row-tag off">เหลือ {r.stock_qty} {typeUnit(r.product_type)}</span>
+              <span className="adm-row-tag off">เหลือ {r.stock_qty} ชิ้น</span>
             </Link>
           ))}
           {low.length > 10 && <Link href="/admin/products" className="adm-sub">ดูทั้งหมดที่สินค้าและสต็อก ({low.length} รายการ)</Link>}

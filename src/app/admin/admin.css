@@ -214,14 +214,14 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-pop-new{justify-content:flex-start;color:var(--blue);background:#f3f8ff}
 .adm-pop-new:hover{background:#e8f1fe}
 
-/* ปุ่มตั้งค่าเล็กๆ ในหน้าสินค้า */
-.adm-gear{position:relative}
-.adm-gear-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;color:#4b5563}
-.adm-gear-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.adm-gear-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:20;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.12);padding:6px;display:flex;flex-direction:column}
-.adm-gear-pop a{padding:12px 14px;border-radius:8px;color:#111827;font-weight:600;text-decoration:none;white-space:nowrap}
-.adm-gear-pop a:hover{background:#f3f4f6}
-
-/* ปุ่มเพิ่ม/ลบในแผงที่เลื่อนออกมา */
-.adm-pop-link{position:sticky;bottom:0;display:flex;align-items:center;min-height:54px;padding:0 16px;background:#f3f8ff;border-top:1px solid #eef1f5;color:var(--blue);font-weight:700;font-size:16px;text-decoration:none}
-.adm-pop-link:hover{background:#e8f1fe}
+/* เพิ่ม/ลบประเภทสินค้า-ยี่ห้อ ในแผงที่เลื่อนออกมา */
+.adm-pop-r{display:flex;border-bottom:1px solid #eef1f5}
+.adm-pop-r .adm-pop-o{flex:1;border-bottom:none;min-width:0}
+.adm-pop-x{flex:none;min-width:64px;border:none;border-left:1px solid #eef1f5;background:#fff;color:#b42318;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.adm-pop-x:hover{background:#fef3f2}
+.adm-pop-x:disabled{opacity:.5}
+.adm-pop-t.err{color:#b42318}
+.adm-pop-add{position:sticky;bottom:0;display:flex;gap:8px;padding:10px;background:#f3f8ff;border-top:1px solid #eef1f5}
+.adm-pop-add input{flex:1;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:16px;min-height:46px;background:#fff}
+.adm-pop-add button{flex:none;min-height:46px;padding:0 16px;border:none;border-radius:9px;background:var(--dark);color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.adm-pop-add button:disabled{opacity:.5}
