@@ -4,6 +4,8 @@ import { PRODUCT_TYPES, baht, typeLabel, typeUnit, type ProductType } from "@/li
 
 export const dynamic = "force-dynamic";
 
+const TYPE_CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
+
 type Row = {
   id: string; name: string; product_type: ProductType; is_active: boolean; is_individual: boolean;
   stock_qty: number; low_stock_threshold: number; cost_price: number; brands: { name: string } | null;
@@ -85,6 +87,17 @@ export default async function AdminHome() {
             )}
           </div>
           {!hasBrand && <p className="adm-hint" style={{ marginTop: 10 }}>ถ้าข้ามขั้นตอนยี่ห้อ พิมพ์ชื่อยี่ห้อในฟอร์มสินค้าได้เลย ระบบจะเพิ่มยี่ห้อให้เอง</p>}
+        </div>
+      )}
+
+      {rows.length > 0 && (
+        <div className="adm-pick" role="group" aria-label="เพิ่มสินค้า">
+          {PRODUCT_TYPES.map((t) => (
+            <Link key={t.value} href={`/admin/products?add=${t.value}`} className={`adm-pick-c ${TYPE_CLS[t.value]}`}>
+              <b>+ {t.label}</b>
+              <span>เพิ่มสินค้าประเภทนี้</span>
+            </Link>
+          ))}
         </div>
       )}
 
