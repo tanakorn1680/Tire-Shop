@@ -218,8 +218,7 @@ export default function ProductForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
-    if (catText.trim() && !chosen) return setErr('ประเภทสินค้านี้ยังไม่ได้เพิ่ม กดปุ่ม "+ เพิ่มประเภท" ในช่องประเภทสินค้าก่อน');
-    if (!chosen && !product) return setErr("กรุณาเลือกประเภทสินค้า (ถ้ายังไม่มี เพิ่มได้ในช่องประเภทสินค้า)");
+    if (!chosen && !catText.trim() && !product) return setErr("กรุณาเลือกประเภทสินค้า (ถ้ายังไม่มี เพิ่มได้ในช่องประเภทสินค้า)");
 
     const width_mm = optNum(form.width_mm), aspect_ratio = optNum(form.aspect_ratio), rim_inch = optNum(form.rim_inch);
     const cost_price = Number(form.cost_price), sale_price = Number(form.sale_price);
@@ -283,6 +282,19 @@ export default function ProductForm({
 
     setSaving(true);
 
+    // ประเภท: พิมพ์ชื่อใหม่ไว้ ระบบเพิ่มให้อัตโนมัติ (เหมือนยี่ห้อ)
+    let catId: string | null = chosen?.id ?? null;
+    if (!chosen && typedCat) {
+      const { data: nc, error: ce } = await sb().from("categories")
+        .insert({ name: typedCat, sort_order: catList.length, product_type: product ? product.product_type : "new_tire" })
+        .select("id").single();
+      if (ce || !nc) {
+        setSaving(false);
+        return setErr(ce?.code === "23505" ? "มีประเภทนี้อยู่แล้ว (อาจใช้กับแบบฟอร์มอื่น) กรุณาเลือกจากรายการ" : "เพิ่มประเภทไม่สำเร็จ ลองใหม่อีกครั้ง");
+      }
+      catId = (nc as { id: string }).id;
+    }
+
     // ยี่ห้อ: มีอยู่แล้วใช้เลย ถ้ายังไม่มีเพิ่มให้อัตโนมัติ (ไม่ต้องไปหน้าอื่น)
     let brandId = findBrand(brandList, form.brand)?.id;
     if (!brandId) {
@@ -295,8 +307,8 @@ export default function ProductForm({
     }
 
     const q = product
-      ? sb().from("products").update({ ...payload, brand_id: brandId }).eq("id", product.id)
-      : sb().from("products").insert({ ...payload, brand_id: brandId });
+      ? sb().from("products").update({ ...payload, brand_id: brandId, category_id: catId }).eq("id", product.id)
+      : sb().from("products").insert({ ...payload, brand_id: brandId, category_id: catId });
     const { data, error } = await q.select(PRODUCT_COLUMNS).single();
     setSaving(false);
 
@@ -402,6 +414,9 @@ export default function ProductForm({
               </div>
             )}
           </div>
+          {typedCat && !chosen && !typeOpen && (
+            <span className="adm-hint">ประเภทใหม่ ระบบจะเพิ่ม "{typedCat}" ให้เมื่อกดบันทึก</span>
+          )}
         </div>
         <div className="adm-f-row">
           <div className="adm-f">
