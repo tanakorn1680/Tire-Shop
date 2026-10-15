@@ -1,12 +1,12 @@
 import Link from "next/link";
 import AddProductHome from "./AddProductHome";
 import { getAdminUser, sbServer } from "@/lib/supabase-server";
-import { PRODUCT_TYPES, baht, typeLabel, typeUnit, type Category, type ProductType } from "@/lib/product-meta";
+import { baht, guessKind, typeLabel, typeUnit, type Category, type ProductType } from "@/lib/product-meta";
 
 export const dynamic = "force-dynamic";
 
 type Row = {
-  id: string; name: string; product_type: ProductType; is_active: boolean; is_individual: boolean;
+  id: string; name: string; product_type: ProductType; category_id: string | null; is_active: boolean; is_individual: boolean;
   stock_qty: number; low_stock_threshold: number; cost_price: number; brands: { name: string } | null;
 };
 
@@ -16,7 +16,7 @@ export default async function AdminHome() {
   const [products, brands, categories] = await Promise.all([
     supabase
       .from("products")
-      .select("id,name,product_type,is_active,is_individual,stock_qty,low_stock_threshold,cost_price,brands(name)")
+      .select("id,name,product_type,category_id,is_active,is_individual,stock_qty,low_stock_threshold,cost_price,brands(name)")
       .returns<Row[]>(),
     supabase.from("brands").select("id,name").order("name"),
     supabase.from("categories").select("id,name,product_type").order("sort_order").order("name").returns<Category[]>(),
@@ -34,7 +34,17 @@ export default async function AdminHome() {
   }
 
   const rows = products.data ?? [];
-  const qtyByType = (t: ProductType) => rows.filter((r) => r.product_type === t).reduce((n, r) => n + r.stock_qty, 0);
+  // การ์ดสรุปตามประเภทสินค้าที่แอดมินเพิ่มไว้ (แสดงเฉพาะประเภทที่มีสินค้า)
+  const cats = categories.data ?? [];
+  const catName = (id: string | null) => cats.find((c) => c.id === id)?.name;
+  const kindOf = (c: Category): ProductType => guessKind(c.name) ?? c.product_type;
+  const COLOR: Record<ProductType, string> = { new_tire: "c-blue", used_tire: "c-green", wheel: "c-purple" };
+  const catCards = cats
+    .map((c) => {
+      const mine = rows.filter((r) => r.category_id === c.id);
+      return { c, count: mine.length, qty: mine.reduce((n, r) => n + r.stock_qty, 0) };
+    })
+    .filter((x) => x.count > 0);
   const stockValue = rows.reduce((n, r) => n + r.stock_qty * Number(r.cost_price), 0);
   const low = rows
     .filter((r) => r.is_active && !r.is_individual && r.stock_qty <= r.low_stock_threshold)
@@ -47,15 +57,13 @@ export default async function AdminHome() {
 
       {rows.length > 0 && (
         <div className="adm-stats">
-          {PRODUCT_TYPES.map((t, i) =>
-            rows.some((r) => r.product_type === t.value) ? (
-              <Link key={t.value} href={`/admin/products?type=${t.value}`} className={`adm-stat ${["c-blue", "c-green", "c-purple"][i]}`}>
-                <small>{t.label}</small>
-                <b>{qtyByType(t.value).toLocaleString("th-TH")}<span>{t.unit}</span></b>
-                <em>ดูรายละเอียด →</em>
-              </Link>
-            ) : null,
-          )}
+          {catCards.map(({ c, qty }) => (
+            <Link key={c.id} href={`/admin/products?cat=${c.id}`} className={`adm-stat ${COLOR[kindOf(c)]}`}>
+              <small>{c.name}</small>
+              <b>{qty.toLocaleString("th-TH")}<span>{typeUnit(kindOf(c))}</span></b>
+              <em>ดูรายละเอียด →</em>
+            </Link>
+          ))}
           <Link href="/admin/products" className="adm-stat c-orange">
             <small>สินค้าทั้งหมด</small>
             <b>{rows.length.toLocaleString("th-TH")}<span>รายการ</span></b>
@@ -71,10 +79,10 @@ export default async function AdminHome() {
       ) : (
         <div className="adm-list">
           {low.slice(0, 10).map((r) => (
-            <Link key={r.id} href={`/admin/products?type=${r.product_type}`} className="adm-row">
+            <Link key={r.id} href={r.category_id ? `/admin/products?cat=${r.category_id}` : "/admin/products"} className="adm-row">
               <div className="adm-row-main">
                 <b>{r.brands?.name} {r.name}</b>
-                <small>{typeLabel(r.product_type)}</small>
+                <small>{catName(r.category_id) ?? typeLabel(r.product_type)}</small>
               </div>
               <span className="adm-row-tag off">เหลือ {r.stock_qty} {typeUnit(r.product_type)}</span>
             </Link>
