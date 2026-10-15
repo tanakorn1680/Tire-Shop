@@ -85,6 +85,7 @@ export default function ProductsManager({
         product={isNew ? null : editing}
         brands={brands}
         categories={categories}
+        canDelete={canDelete}
         onDone={(saved) => {
           if (saved) { upsertLocal(saved); router.refresh(); }
           setEditing(null);
@@ -95,7 +96,7 @@ export default function ProductsManager({
 
   // กดเพิ่มสินค้า = เข้าฟอร์มเลย เลือกประเภทในฟอร์มได้
   function onAdd() {
-    setEditing("new_tire");
+    setEditing("new");
   }
 
   return (
@@ -138,7 +139,7 @@ export default function ProductsManager({
 
       {items.length === 0 ? (
         <div className="adm-empty">
-          <p>{categories.length === 0 ? "ยังไม่มีประเภทสินค้า กดปุ่มเฟืองด้านบน แล้วเลือก \"เพิ่ม/ลบประเภทสินค้า\" เพื่อเพิ่มก่อน" : "ยังไม่มีสินค้า กด \"+ เพิ่มสินค้า\" ได้เลย"}</p>
+          <p>{categories.length === 0 ? "ยังไม่มีประเภทสินค้า กด \"+ เพิ่มสินค้า\" แล้วเพิ่มประเภทในช่อง \"ประเภทสินค้า\" ได้เลย" : "ยังไม่มีสินค้า กด \"+ เพิ่มสินค้า\" ได้เลย"}</p>
           <p style={{ marginTop: 8 }}>
             {brands.length === 0
               ? "ยี่ห้อพิมพ์ในฟอร์มสินค้าได้เลย ระบบจะเพิ่มให้เอง หรือจะเพิ่มยี่ห้อไว้ก่อนก็ได้"
