@@ -15,15 +15,15 @@ const PAGE = 50;
 const CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
 
 export default function ProductsManager({
-  initial, brands, canDelete, initialTab, initialQ,
+  initial, brands, canDelete, initialTab, initialQ, initialAdd = false,
 }: {
   initial: AdminProduct[]; brands: Named[];
-  canDelete: boolean; initialTab: ProductType | "all"; initialQ: string;
+  canDelete: boolean; initialTab: ProductType | "all"; initialQ: string; initialAdd?: boolean;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const [editing, setEditing] = useState<AdminProduct | ProductType | null>(null); // ProductType = เพิ่มใหม่
-  const [picking, setPicking] = useState(false); // แสดงการ์ดเลือกประเภท หลังกด "เพิ่มสินค้า"
+  const [picking, setPicking] = useState(initialAdd); // แสดงการ์ดเลือกประเภท หลังกด "เพิ่มสินค้า"
   const [tabRaw, setTab] = useState<ProductType | "all">(initialTab);
   const [q, setQ] = useState(initialQ);
   const [lowOnly, setLowOnly] = useState(false);
