@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AddProductHome from "./AddProductHome";
 import { sbServer } from "@/lib/supabase-server";
 import { PRODUCT_TYPES, baht, typeLabel, typeUnit, type ProductType } from "@/lib/product-meta";
 
@@ -11,10 +12,13 @@ type Row = {
 
 export default async function AdminHome() {
   const supabase = await sbServer();
-  const products = await supabase
-    .from("products")
-    .select("id,name,product_type,is_active,is_individual,stock_qty,low_stock_threshold,cost_price,brands(name)")
-    .returns<Row[]>();
+  const [products, brands] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id,name,product_type,is_active,is_individual,stock_qty,low_stock_threshold,cost_price,brands(name)")
+      .returns<Row[]>(),
+    supabase.from("brands").select("id,name").order("name"),
+  ]);
 
   if (products.error) {
     return (
@@ -35,14 +39,7 @@ export default async function AdminHome() {
     .sort((a, b) => a.stock_qty - b.stock_qty);
 
   return (
-    <>
-      <div className="adm-pg-hd">
-        <div>
-          <h1>หน้าหลัก</h1>
-          <p>ภาพรวมสินค้าและสต็อกของร้าน</p>
-        </div>
-        <Link href="/admin/products?add=1" className="btn btn-dark">+ เพิ่มสินค้า</Link>
-      </div>
+    <AddProductHome brands={brands.data ?? []}>
 
       {rows.length === 0 && <p className="adm-sub">ยังไม่มีสินค้า กดปุ่ม "+ เพิ่มสินค้า" ได้เลย (พิมพ์ยี่ห้อใหม่ในฟอร์มได้ ระบบเพิ่มให้เอง)</p>}
 
@@ -85,6 +82,6 @@ export default async function AdminHome() {
       )}
       </div>
       )}
-    </>
+    </AddProductHome>
   );
 }
