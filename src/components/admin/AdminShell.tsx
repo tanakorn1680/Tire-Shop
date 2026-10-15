@@ -32,6 +32,7 @@ const NAV: { group: string | null; items: { href: string; label: string; icon: s
     items: [
       { href: "/admin/settings", label: "ตั้งค่าร้าน", icon: "sliders" },
       { href: "/admin/brands", label: "ยี่ห้อ", icon: "tag" },
+      { href: "/admin/categories", label: "ประเภทสินค้า", icon: "grid" },
       { href: "/admin/services", label: "บริการ", icon: "wrench" },
     ],
   },
