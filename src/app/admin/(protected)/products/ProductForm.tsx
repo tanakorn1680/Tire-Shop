@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
 import {
-  PRODUCT_COLUMNS, dotText, findBrand, parseDot, typeLabel, typeUnit,
+  PRODUCT_COLUMNS, dotText, findBrand, guessKind, parseDot, typeLabel, typeUnit,
   type AdminProduct, type Category, type Named, type ProductType,
 } from "@/lib/product-meta";
 
@@ -61,7 +61,8 @@ export default function ProductForm({
   const chosen = catList.find((c) => c.id === categoryId);
   // ข้อความในช่องประเภทสินค้า (พิมพ์ค้นหา/พิมพ์ชื่อใหม่ได้ในช่องเดียวกัน)
   const [catText, setCatText] = useState(() => categories.find((c) => c.id === (product?.category_id ?? ""))?.name ?? "");
-  const type: ProductType = product?.product_type ?? chosen?.product_type ?? "new_tire";
+  // แบบฟอร์มดูจากชื่อประเภทที่เลือก/พิมพ์ (เช่น มีคำว่า ล้อแม็ก → ฟอร์มล้อแม็ก) ถ้าไม่เจอคำใช้ค่าที่บันทึกไว้กับประเภทนั้น
+  const type: ProductType = product?.product_type ?? guessKind(catText) ?? chosen?.product_type ?? "new_tire";
   const typeChoices = product ? catList.filter((c) => c.product_type === product.product_type) : catList;
   const title = chosen?.name ?? (product ? typeLabel(product.product_type) : "สินค้า");
   const router = useRouter();
@@ -78,6 +79,20 @@ export default function ProductForm({
   const [more, setMore] = useState(!!product);
   const fail = (msg: string, openMore = false) => { if (openMore) setMore(true); setErr(msg); };
 
+  // เปลี่ยนแบบฟอร์มระหว่างเพิ่มสินค้าใหม่: ยางมือสองติดตามรายเส้น จำนวน 1 อัตโนมัติ
+  const prevType = useRef(type);
+  useEffect(() => {
+    if (prevType.current === type) return;
+    const wasUsed = prevType.current === "used_tire";
+    prevType.current = type;
+    if (product) return;
+    setForm((f) => ({
+      ...f,
+      is_individual: type === "used_tire",
+      stock_qty: type === "used_tire" ? "1" : wasUsed && f.stock_qty === "1" ? "0" : f.stock_qty,
+    }));
+  }, [type, product]);
+
   function set<K extends keyof Draft>(k: K, v: Draft[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
@@ -86,18 +101,10 @@ export default function ProductForm({
   const [typeOpen, setTypeOpen] = useState(false);
   const typeInput = useRef<HTMLInputElement>(null);
   function pickType(c: Category) {
-    const v = c.product_type;
-    const wasUsed = type === "used_tire";
     setCategoryId(c.id);
     setCatText(c.name);
     setTypeOpen(false);
     typeInput.current?.blur();
-    if (product) return;
-    setForm((f) => ({
-      ...f,
-      is_individual: v === "used_tire",
-      stock_qty: v === "used_tire" ? "1" : wasUsed && f.stock_qty === "1" ? "0" : f.stock_qty,
-    }));
   }
 
   // แผงเลือกยี่ห้อที่เลื่อนลงมาจากช่องยี่ห้อ
@@ -146,7 +153,7 @@ export default function ProductForm({
     setPopBusy(true);
     setPopMsg(null);
     const { data, error } = await sb().from("categories")
-      .insert({ name: n, sort_order: catList.length, product_type: product ? product.product_type : "new_tire" })
+      .insert({ name: n, sort_order: catList.length, product_type: product ? product.product_type : guessKind(n) ?? "new_tire" })
       .select("id,name,product_type").single();
     setPopBusy(false);
     if (error || !data) return setPopMsg(error?.code === "23505" ? "มีประเภทนี้อยู่แล้ว" : "เพิ่มไม่สำเร็จ ลองใหม่อีกครั้ง");
@@ -286,7 +293,7 @@ export default function ProductForm({
     let catId: string | null = chosen?.id ?? null;
     if (!chosen && typedCat) {
       const { data: nc, error: ce } = await sb().from("categories")
-        .insert({ name: typedCat, sort_order: catList.length, product_type: product ? product.product_type : "new_tire" })
+        .insert({ name: typedCat, sort_order: catList.length, product_type: product ? product.product_type : type })
         .select("id").single();
       if (ce || !nc) {
         setSaving(false);

@@ -13,6 +13,15 @@ export const isProductType = (v: unknown): v is ProductType =>
 export const typeLabel = (t: ProductType) => PRODUCT_TYPES.find((x) => x.value === t)?.label ?? "";
 export const typeUnit = (t: ProductType) => PRODUCT_TYPES.find((x) => x.value === t)?.unit ?? "ชิ้น";
 
+// เดาแบบฟอร์มจากชื่อประเภทที่แอดมินตั้ง (ล้อแม็ก / ยางมือสอง-เปอร์เซ็นต์ / ยางมือหนึ่ง) ไม่เจอคำใดคืน null
+export function guessKind(name: string): ProductType | null {
+  const n = name.toLowerCase().replace(/ยางล้อ/g, "");
+  if (/ล้อ|แม็ก|แม๊ก|แมก|wheel|alloy/.test(n)) return "wheel";
+  if (/มือสอง|มือ ?2|เปอร์เซ็น|เปอร์เซน|%|used/.test(n)) return "used_tire";
+  if (/มือหนึ่ง|มือ ?1|มือใหม่|ใหม่|\bnew\b/.test(n)) return "new_tire";
+  return null;
+}
+
 export type AdminProduct = {
   id: string; brand_id: string; brand_name: string; name: string; model: string | null;
   sku: string | null; product_type: ProductType; is_individual: boolean; storage_location: string | null;
