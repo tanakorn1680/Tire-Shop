@@ -1,4 +1,7 @@
 /* ===== Admin shell ===== */
+/* root layout ครอบ Header/Footer ของหน้าลูกค้าไว้ทุกหน้า ซ่อนในหน้า /admin เพื่อไม่ให้มีเมนูซ้ำซ้อน */
+body:has(.adm, .adm-auth) > .hdr,
+body:has(.adm, .adm-auth) > .ftr{display:none}
 .adm{min-height:100vh;background:#f6f6f8}
 .adm-hdr{background:var(--dark);color:#fff;position:sticky;top:0;z-index:20}
 .adm-hdr-in{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:20px;height:56px}
