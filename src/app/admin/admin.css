@@ -173,3 +173,12 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-opt[open] summary::before{content:"\2212"}
 .adm-opt summary span{font-weight:400;font-size:12px;color:var(--muted)}
 .adm-opt-body{display:grid;gap:14px;padding:4px 14px 16px;border-top:1px solid var(--line);padding-top:14px}
+
+/* ===== บทเริ่มต้นใช้งาน (หน้าหลักตอนยังไม่มีสินค้า) ===== */
+.adm-start{margin-bottom:16px}
+.adm-start h2{font-size:17px}
+.adm-steps{list-style:none;counter-reset:st;display:grid;gap:12px;margin:0;padding:0}
+.adm-steps li{counter-increment:st;display:grid;grid-template-columns:32px 1fr;column-gap:12px;align-items:start}
+.adm-steps li::before{content:counter(st);grid-row:1 / span 2;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:15px}
+.adm-steps li b{font-size:15px}
+.adm-steps li span{font-size:13px;color:var(--muted)}

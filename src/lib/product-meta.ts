@@ -3,7 +3,7 @@
 export type ProductType = "new_tire" | "used_tire" | "wheel";
 
 export const PRODUCT_TYPES: { value: ProductType; label: string; unit: string }[] = [
-  { value: "new_tire", label: "ยางมือ 1", unit: "เส้น" },
+  { value: "new_tire", label: "ยางมือหนึ่ง", unit: "เส้น" },
   { value: "used_tire", label: "ยางมือสอง", unit: "เส้น" },
   { value: "wheel", label: "ล้อแม็ก", unit: "วง" },
 ];

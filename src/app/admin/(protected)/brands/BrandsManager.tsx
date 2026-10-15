@@ -77,7 +77,7 @@ export default function BrandsManager({ initial, canDelete }: { initial: Brand[]
       </form>
 
       {items.length === 0 ? (
-        <p className="adm-empty">ยังไม่มียี่ห้อ</p>
+        <p className="adm-empty">ยังไม่มียี่ห้อ ยี่ห้อจะถูกเพิ่มให้อัตโนมัติเมื่อคุณเพิ่มสินค้าชิ้นแรก หรือเพิ่มเองที่นี่ก็ได้</p>
       ) : (
         <div className="adm-list">
           {items.map((b) => (

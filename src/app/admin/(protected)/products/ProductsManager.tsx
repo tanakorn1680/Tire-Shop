@@ -147,7 +147,7 @@ export default function ProductsManager({
       {err && <p className="adm-msg err" style={{ marginBottom: 12 }}>{err}</p>}
 
       {filtered.length === 0 ? (
-        <p className="adm-empty">{items.length === 0 ? "ยังไม่มีสินค้า กด \"เพิ่มสินค้า\" แล้วเลือกประเภทเพื่อเริ่มต้น" : "ไม่พบสินค้าที่ตรงกับการค้นหา"}</p>
+        <p className="adm-empty">{items.length === 0 ? "ยังไม่มียี่ห้อหรือสินค้า เริ่มต้นใหม่ได้เลย: กด \"เพิ่มสินค้า\" เลือกประเภท แล้วกรอกข้อมูล" : "ไม่พบสินค้าที่ตรงกับการค้นหา"}</p>
       ) : (
         <>
           <p className="adm-sub">แสดง {shown.length} จาก {filtered.length} รายการ</p>

@@ -48,11 +48,15 @@ export default async function AdminHome() {
       </div>
 
       {needsSetup && (
-        <div className="adm-card" style={{ marginBottom: 16 }}>
-          <b>เริ่มต้นใช้งาน</b>
-          <p className="adm-sub" style={{ margin: "6px 0 0" }}>
-            เพิ่มสินค้าชิ้นแรกที่ <Link href="/admin/products" style={{ textDecoration: "underline" }}>สินค้าและสต็อก</Link> กด "+ เพิ่ม" แล้วกรอกข้อมูลได้เลย ยี่ห้อพิมพ์ในฟอร์มได้ ไม่ต้องไปเพิ่มที่อื่นก่อน
-          </p>
+        <div className="adm-card adm-start">
+          <h2>เริ่มต้นใช้งาน</h2>
+          <p className="adm-sub" style={{ margin: "4px 0 12px" }}>ยังไม่มียี่ห้อหรือสินค้าในระบบ ทำตาม 3 ขั้นตอนนี้ได้เลย</p>
+          <ol className="adm-steps">
+            <li><b>กด "เพิ่มสินค้า"</b><span>ที่หน้าสินค้าและสต็อก แล้วเลือกประเภท ยางมือหนึ่ง ยางมือสอง หรือ ล้อแม็ก</span></li>
+            <li><b>กรอกข้อมูลที่จำเป็น</b><span>ยี่ห้อ ชื่อรุ่น ขนาด ราคาทุน ราคาขาย และจำนวน ยี่ห้อพิมพ์ได้เลย ระบบเพิ่มให้เอง</span></li>
+            <li><b>กดบันทึก</b><span>รายละเอียดอื่น เช่น รหัสสินค้า ตำแหน่งจัดเก็บ กรอกทีหลังได้</span></li>
+          </ol>
+          <Link href="/admin/products" className="btn btn-dark" style={{ marginTop: 14 }}>ไปหน้าสินค้าและสต็อก</Link>
         </div>
       )}
 
