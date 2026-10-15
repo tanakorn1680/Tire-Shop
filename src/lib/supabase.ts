@@ -10,6 +10,7 @@ export type Product = {
 export type Settings = {
   store_name: string | null; tagline: string | null; phone: string | null;
   hours: string | null; address: string | null; line_url: string | null;
+  facebook_url: string | null; messenger_url: string | null;
 };
 export type Named = { id: string; name: string; description?: string | null };
 
@@ -19,7 +20,7 @@ const client = () => (url && key ? createClient(url, key) : null);
 
 export const t = (v?: string | null) => v?.trim() ?? "";
 export const hasContact = (s: Partial<Settings>) =>
-  !!(t(s.phone) || t(s.hours) || t(s.address) || t(s.line_url));
+  !!(t(s.phone) || t(s.hours) || t(s.address) || t(s.line_url) || t(s.facebook_url));
 
 export const imageUrl = (path?: string | null) =>
   path && url ? `${url}/storage/v1/object/public/product-images/${path}` : null;
@@ -31,13 +32,19 @@ export const getSite = cache(async () => {
   let categories: Named[] = [];
   let services: Named[] = [];
   if (sb) {
+    // ถ้ายังไม่ได้รัน migration 0006 (คอลัมน์ facebook_url/messenger_url) ให้ใช้คอลัมน์เดิมไปก่อน เว็บจะได้ไม่ว่างเปล่า
+    const base = "store_name,tagline,phone,hours,address,line_url";
+    const loadSettings = async () => {
+      const full = await sb.from("store_settings").select(`${base},facebook_url,messenger_url`).eq("id", 1).maybeSingle();
+      return full.error ? sb.from("store_settings").select(base).eq("id", 1).maybeSingle() : full;
+    };
     const [s, c, v, u] = await Promise.all([
-      sb.from("store_settings").select("store_name,tagline,phone,hours,address,line_url").eq("id", 1).maybeSingle(),
+      loadSettings(),
       sb.from("categories").select("id,name").order("sort_order").order("name"),
       sb.from("services").select("id,name,description").eq("is_active", true).order("sort_order"),
       sb.from("products_public").select("category_id"),
     ]);
-    settings = s.data ?? {};
+    settings = (s.data ?? {}) as Partial<Settings>;
     // แสดงเฉพาะประเภทที่มีสินค้าอยู่จริง ถ้ายังไม่มีเลยจะเหลือแค่ "ทั้งหมด"
     const used = new Set(((u.data ?? []) as { category_id: string | null }[]).map((p) => p.category_id));
     categories = (c.data ?? []).filter((x) => used.has(x.id));
