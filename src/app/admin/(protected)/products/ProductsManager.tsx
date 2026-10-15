@@ -22,8 +22,7 @@ export default function ProductsManager({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
-  const [editing, setEditing] = useState<AdminProduct | ProductType | null>(null); // ProductType = เพิ่มใหม่
-  const [picking, setPicking] = useState(initialAdd); // แสดงการ์ดเลือกประเภท หลังกด "เพิ่มสินค้า"
+  const [editing, setEditing] = useState<AdminProduct | ProductType | null>(initialAdd ? "new_tire" : null); // ProductType = เพิ่มใหม่
   const [tabRaw, setTab] = useState<ProductType | "all">(initialTab);
   const [q, setQ] = useState(initialQ);
   const [lowOnly, setLowOnly] = useState(false);
@@ -93,9 +92,9 @@ export default function ProductsManager({
     );
   }
 
-  // กดเพิ่มสินค้าแล้วให้เลือกประเภทก่อนทุกครั้ง (ไม่ว่าอยู่แท็บไหน) แล้วจึงเข้าฟอร์มของประเภทนั้น
+  // กดเพิ่มสินค้า = เข้าฟอร์มเลย เลือกประเภทในฟอร์มได้
   function onAdd() {
-    setPicking((v) => !v);
+    setEditing("new_tire");
   }
 
   return (
@@ -132,20 +131,6 @@ export default function ProductsManager({
           + เพิ่มสินค้า
         </button>
       </div>
-
-      {picking && (
-        <>
-          <p className="adm-sub" style={{ margin: "0 0 8px" }}>เลือกประเภทสินค้าที่จะเพิ่ม</p>
-          <div className="adm-pick" role="group" aria-label="เลือกประเภทสินค้าที่จะเพิ่ม">
-            {PRODUCT_TYPES.map((t) => (
-              <button key={t.value} type="button" className={`adm-pick-c ${CLS[t.value]}`} onClick={() => { setPicking(false); setEditing(t.value); }}>
-                <b>{t.label}</b>
-                <span>เพิ่มสินค้าประเภทนี้</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
 
       {err && <p className="adm-msg err" style={{ marginBottom: 12 }}>{err}</p>}
 

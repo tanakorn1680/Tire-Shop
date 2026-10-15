@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
 import {
-  PRODUCT_COLUMNS, dotText, findBrand, parseDot, typeLabel, typeUnit,
+  PRODUCT_COLUMNS, PRODUCT_TYPES, dotText, findBrand, parseDot, typeLabel, typeUnit,
   type AdminProduct, type Named, type ProductType,
 } from "@/lib/product-meta";
 
@@ -51,7 +51,9 @@ export default function ProductForm({
   brands: Named[];
   onDone: (saved: AdminProduct | null) => void;
 }) {
-  const type: ProductType = product?.product_type ?? newType ?? "new_tire";
+  // เพิ่มสินค้าใหม่: เลือกประเภทในฟอร์มได้เลย ไม่ต้องเปลี่ยนหน้า (แก้ไขสินค้าเดิมเปลี่ยนประเภทไม่ได้)
+  const [newT, setNewT] = useState<ProductType>(newType ?? "new_tire");
+  const type: ProductType = product?.product_type ?? newT;
   const isWheel = type === "wheel";
   const isUsed = type === "used_tire";
   const unit = typeUnit(type);
@@ -67,6 +69,19 @@ export default function ProductForm({
 
   function set<K extends keyof Draft>(k: K, v: Draft[K]) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  // แผงเลือกประเภทสินค้า (เฉพาะตอนเพิ่มใหม่)
+  const [typeOpen, setTypeOpen] = useState(false);
+  function pickType(v: ProductType) {
+    const wasUsed = type === "used_tire";
+    setNewT(v);
+    setTypeOpen(false);
+    setForm((f) => ({
+      ...f,
+      is_individual: v === "used_tire",
+      stock_qty: v === "used_tire" ? "1" : wasUsed && f.stock_qty === "1" ? "0" : f.stock_qty,
+    }));
   }
 
   // แผงเลือกยี่ห้อที่เลื่อนลงมาจากช่องยี่ห้อ
@@ -220,6 +235,52 @@ export default function ProductForm({
 
       <fieldset className="adm-fs">
         <legend>ข้อมูลสินค้า</legend>
+        {!product && (
+          <div className="adm-f" style={{ marginBottom: 12 }}>
+            <label htmlFor="type-input">ประเภทสินค้า *</label>
+            <div className={`adm-combo ${TYPE_CLS[type]} ${typeOpen ? "open" : ""}`}>
+              <input
+                id="type-input"
+                value={typeLabel(type)}
+                readOnly
+                inputMode="none"
+                onClick={() => setTypeOpen((v) => !v)}
+                onBlur={() => setTypeOpen(false)}
+                style={{ cursor: "pointer" }}
+                role="combobox"
+                aria-expanded={typeOpen}
+                aria-controls="type-pop"
+              />
+              <button
+                type="button"
+                className="adm-combo-arrow"
+                tabIndex={-1}
+                aria-label={typeOpen ? "ปิดรายการประเภท" : "เปิดรายการประเภท"}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setTypeOpen((v) => !v)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+              </button>
+              {typeOpen && (
+                <div id="type-pop" className="adm-pop" role="listbox" onMouseDown={(e) => e.preventDefault()}>
+                  {PRODUCT_TYPES.map((o) => (
+                    <button
+                      key={o.value}
+                      type="button"
+                      role="option"
+                      aria-selected={o.value === type}
+                      className={`adm-pop-o ${o.value === type ? "on" : ""}`}
+                      onClick={() => pickType(o.value)}
+                    >
+                      <span>{o.label}</span>
+                      {o.value === type && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <div className="adm-f-row">
           <div className="adm-f">
             <label htmlFor="brand-input">ยี่ห้อ *</label>
