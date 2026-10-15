@@ -6,7 +6,7 @@ import type { Category, Named } from "@/lib/product-meta";
 import ProductForm from "./products/ProductForm";
 
 // หน้าหลัก: ปุ่มเดียว "+ เพิ่มสินค้า" กดแล้วแสดงฟอร์มในหน้านี้เลย (ไม่เปลี่ยนหน้า)
-export default function AddProductHome({ brands, categories, children }: { brands: Named[]; categories: Category[]; children: React.ReactNode }) {
+export default function AddProductHome({ brands, categories, canDelete, children }: { brands: Named[]; categories: Category[]; canDelete: boolean; children: React.ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -16,6 +16,7 @@ export default function AddProductHome({ brands, categories, children }: { brand
         product={null}
         brands={brands}
         categories={categories}
+        canDelete={canDelete}
         onDone={(saved) => {
           setOpen(false);
           window.scrollTo(0, 0);

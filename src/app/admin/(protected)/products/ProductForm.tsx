@@ -116,8 +116,8 @@ export default function ProductForm({
   const [popMsg, setPopMsg] = useState<string | null>(null);
   const [popBusy, setPopBusy] = useState(false);
   const [newCat, setNewCat] = useState("");
-  const [newKind, setNewKind] = useState<ProductType>("new_tire");
-  const kindForNew: ProductType = product ? product.product_type : newKind;
+  const [newKind, setNewKind] = useState<ProductType | "">(""); // เว้นว่างไว้ให้แอดมินเลือกเอง
+  const kindForNew: ProductType | "" = product ? product.product_type : newKind;
 
   useEffect(() => { setPopMsg(null); }, [typeOpen, brandOpen]);
   // ปิดแผงเมื่อแตะ/โฟกัสนอกแผง
@@ -138,7 +138,7 @@ export default function ProductForm({
 
   async function addCategory() {
     const n = newCat.trim().replace(/\s+/g, " ");
-    if (!n || popBusy) return;
+    if (!n || !kindForNew || popBusy) return;
     if (catList.some((c) => c.name.toLowerCase() === n.toLowerCase())) return setPopMsg("มีประเภทนี้อยู่แล้ว");
     setPopBusy(true);
     setPopMsg(null);
@@ -392,10 +392,11 @@ export default function ProductForm({
                     />
                     {!product && (
                       <select value={newKind} onChange={(e) => setNewKind(e.target.value as ProductType)} aria-label="แบบฟอร์มกรอกข้อมูลของประเภทนี้">
-                        {PRODUCT_TYPES.map((k) => <option key={k.value} value={k.value}>ฟอร์ม: {k.label}</option>)}
+                        <option value="" disabled>เลือกแบบฟอร์มกรอกข้อมูล</option>
+                        {PRODUCT_TYPES.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
                       </select>
                     )}
-                    <button type="button" className="btn btn-dark" disabled={popBusy || !newCat.trim()} onClick={addCategory}>+ เพิ่มประเภท</button>
+                    <button type="button" className="btn btn-dark" disabled={popBusy || !newCat.trim() || !kindForNew} onClick={addCategory}>+ เพิ่มประเภท</button>
                   </div>
                 </div>
               )}

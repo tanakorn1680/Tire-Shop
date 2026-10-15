@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
@@ -10,7 +9,6 @@ import {
   type AdminProduct, type Category, type Named, type ProductType,
 } from "@/lib/product-meta";
 import ProductForm from "./ProductForm";
-import GearMenu from "./GearMenu";
 
 const PAGE = 50;
 const CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
@@ -129,8 +127,7 @@ export default function ProductsManager({
             </button>
           </>
         )}
-        <GearMenu style={items.length === 0 ? undefined : { marginLeft: "auto" }} />
-        <button className="btn btn-dark" type="button" onClick={onAdd}>
+        <button className="btn btn-dark" type="button" onClick={onAdd} style={items.length === 0 ? undefined : { marginLeft: "auto" }}>
           + เพิ่มสินค้า
         </button>
       </div>
@@ -139,15 +136,7 @@ export default function ProductsManager({
 
       {items.length === 0 ? (
         <div className="adm-empty">
-          <p>{categories.length === 0 ? "ยังไม่มีประเภทสินค้า กด \"+ เพิ่มสินค้า\" แล้วเพิ่มประเภทในช่อง \"ประเภทสินค้า\" ได้เลย" : "ยังไม่มีสินค้า กด \"+ เพิ่มสินค้า\" ได้เลย"}</p>
-          <p style={{ marginTop: 8 }}>
-            {brands.length === 0
-              ? "ยี่ห้อพิมพ์ในฟอร์มสินค้าได้เลย ระบบจะเพิ่มให้เอง หรือจะเพิ่มยี่ห้อไว้ก่อนก็ได้"
-              : `มี ${brands.length.toLocaleString("th-TH")} ยี่ห้อพร้อมให้เลือกในฟอร์มสินค้า`}
-          </p>
-          <div style={{ marginTop: 12 }}>
-            <Link href="/admin/brands" className="btn btn-ghost">{brands.length === 0 ? "เพิ่มยี่ห้อก่อน" : "จัดการยี่ห้อ"}</Link>
-          </div>
+          <p>ยังไม่มีสินค้า กด "+ เพิ่มสินค้า" แล้วเพิ่มประเภทสินค้าและยี่ห้อได้ในฟอร์มเลย</p>
         </div>
       ) : filtered.length === 0 ? (
         <p className="adm-empty">ไม่พบสินค้าที่ตรงกับการค้นหา</p>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import AddProductHome from "./AddProductHome";
-import { sbServer } from "@/lib/supabase-server";
+import { getAdminUser, sbServer } from "@/lib/supabase-server";
 import { PRODUCT_TYPES, baht, typeLabel, typeUnit, type Category, type ProductType } from "@/lib/product-meta";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +11,7 @@ type Row = {
 };
 
 export default async function AdminHome() {
+  const { role } = await getAdminUser();
   const supabase = await sbServer();
   const [products, brands, categories] = await Promise.all([
     supabase
@@ -40,7 +41,7 @@ export default async function AdminHome() {
     .sort((a, b) => a.stock_qty - b.stock_qty);
 
   return (
-    <AddProductHome brands={brands.data ?? []} categories={categories.data ?? []}>
+    <AddProductHome brands={brands.data ?? []} categories={categories.data ?? []} canDelete={role === "owner"}>
 
       {rows.length === 0 && <p className="adm-sub">ยังไม่มีสินค้า กดปุ่ม "+ เพิ่มสินค้า" ได้เลย (พิมพ์ยี่ห้อใหม่ในฟอร์มได้ ระบบเพิ่มให้เอง)</p>}
 
