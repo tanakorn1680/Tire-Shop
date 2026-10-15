@@ -1,0 +1,95 @@
+*{box-sizing:border-box;margin:0}
+:root{--brand:#ffc400;--dark:#14161b;--line:#e8e8ec;--muted:#6b7280}
+body{color:#1f2430;background:#f6f6f8;line-height:1.5}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:999px;border:2px solid transparent;cursor:pointer;font:inherit;font-weight:700}
+.btn-brand{background:var(--brand);color:#1a1a1a}
+.btn-line{background:#fff;color:#1a1a1a;padding:8px 16px;font-size:14px}
+.btn-dark{background:var(--dark);color:#fff;border-radius:10px;justify-content:center}
+.hdr{background:var(--dark);color:#fff;position:sticky;top:0;z-index:10}
+.hdr-in{display:flex;align-items:center;gap:20px;height:64px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo b{display:block;font-size:18px;line-height:1.1}
+.logo small{font-size:11px;color:#bbb}
+.nav-d{display:flex;gap:26px;margin-left:auto;font-weight:600;font-size:14px}
+.nav-d a:hover{color:var(--brand)}
+.hdr-r{display:flex;align-items:center;gap:14px;font-size:14px}
+.nav-m{display:none;position:relative}
+.nav-m summary{list-style:none;font-size:26px;cursor:pointer}
+.nav-m div{position:absolute;right:0;top:44px;background:var(--dark);border-radius:10px;padding:8px;min-width:180px;display:grid}
+.nav-m a{padding:10px 14px}
+.search{background:#fff;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.12);padding:20px;position:relative}
+.search h2{font-size:16px;margin-bottom:12px}
+.search form{display:grid;grid-template-columns:repeat(3,1fr) auto;gap:12px;align-items:end}
+.search label{font-size:12px;color:var(--muted);display:grid;gap:4px}
+select{padding:11px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+.sec{padding:36px 0}
+.sec-t{font-size:20px;border-left:4px solid var(--brand);padding-left:10px;margin-bottom:18px}
+.rowhd{display:flex;justify-content:space-between;align-items:baseline;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px}
+.card .img{aspect-ratio:1;background:#f0f0f3;border-radius:8px;display:grid;place-items:center;font-size:48px;overflow:hidden;margin-bottom:6px}
+.card .img img{width:100%;height:100%;object-fit:contain}
+.card small{color:var(--muted)}
+.price{font-size:20px;font-weight:700}
+.tag{font-size:12px;color:#b42318}
+.card .btn{justify-content:center;padding:8px;font-size:14px;margin-top:auto}
+.note{background:#fff;border:1px dashed #ccc;border-radius:12px;padding:28px;text-align:center;color:var(--muted)}
+.svc{background:var(--dark);color:#fff}
+.svc-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.svc-g .ic{font-size:30px}
+.svc-g p{color:#bbb;font-size:14px}
+.ftr{background:var(--dark);color:#ddd;padding:28px 0;font-size:14px}
+.ftr-in{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:center}
+.cp{text-align:center;margin-top:18px;font-size:12px;color:#888}
+@media(max-width:760px){.nav-d,.tel{display:none}.nav-m{display:block}.hdr-r{margin-left:auto}.search form{grid-template-columns:1fr 1fr 1fr}.search form button{grid-column:1/-1}.logo{display:block}.logo small{display:none}}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.chips a{padding:8px 16px;border:1px solid var(--line);border-radius:999px;background:#fff;font-size:14px}
+.chips a.on{background:var(--dark);color:#fff;border-color:var(--dark)}
+.svc-g b{display:block}
+.nav-m summary{font-size:14px;font-weight:600}
+/* ===== โทนตามแบบ: ดำชาร์โคล + เหลือง ===== */
+body{background:#fff}
+html{color-scheme:light}
+.nav-d a{padding:22px 0 19px;border-bottom:3px solid transparent}
+.nav-d a:hover{color:var(--brand);border-color:var(--brand)}
+.band{height:120px;background:linear-gradient(100deg,rgba(14,15,19,.96) 35%,rgba(14,15,19,.6)),url(/hero.jpg) center/cover,#14161b}
+.up{margin-top:-70px;position:relative}
+.search{border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:22px 24px}
+.search h2{display:inline-block;border-bottom:3px solid var(--brand);padding-bottom:8px;margin-bottom:16px}
+select{font-weight:600}
+.btn-dark{padding:12px 30px}
+.sec-t{font-weight:700}
+.card{border-radius:14px;transition:box-shadow .15s}
+.card:hover{box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.card .brand{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card .btn{border-radius:8px}
+.chips a{border-radius:12px;font-weight:600;padding:10px 18px}
+.chips a:hover{border-color:var(--brand)}
+.svc{padding:44px 0}
+.svc .sec-t{color:#fff}
+.svc-i{display:flex;gap:14px;align-items:flex-start}
+.svc-i .dot{flex:none;width:44px;height:44px;border:2px solid var(--brand);border-radius:50%;position:relative}
+.svc-i .dot::after{content:"";position:absolute;inset:14px;border-radius:50%;background:var(--brand)}
+@media(max-width:760px){.band{height:90px}.up{margin-top:-52px}}
+/* ===== ขนาดกะทัดรัด (เล็กลง โปร่งขึ้น) ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-size:15px}
+.wrap{max-width:1180px;padding:0 16px}
+.hdr-in{height:60px}
+.logo b{font-size:17px}
+.nav-d{font-size:14px}
+.sec{padding:28px 0}
+.sec-t{font-size:18px;margin-bottom:14px}
+.rowhd{font-size:14px}
+.search{padding:18px 20px}
+.search h2{font-size:14px}
+.search label{font-size:12px;min-width:0}
+select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
+.btn-dark{padding:10px 24px}
+.price{font-size:18px}
+.card small{font-size:13px}
+.card .btn{font-size:14px;padding:8px}
+.grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+@media(max-width:760px){body{font-size:14px}.wrap{padding:0 12px}.hdr-in{height:52px}.logo b{font-size:15px}.band{height:84px}.up{margin-top:-46px}.search{padding:14px}.search form{grid-template-columns:1fr 1fr;gap:10px}.search form button{grid-column:auto}.sec{padding:22px 0}.sec-t{font-size:16px}.chips{gap:6px;margin-top:12px}.chips a{padding:7px 12px;font-size:13px}.grid{grid-template-columns:repeat(2,1fr);gap:10px}.card{padding:10px}.card .img{aspect-ratio:4/3}.card .brand{font-size:10px}.card small{font-size:12px}.price{font-size:16px}.card .btn{font-size:13px;padding:7px}.svc{padding:28px 0}.svc-g{grid-template-columns:1fr;gap:14px}.svc-i .dot{width:34px;height:34px}.svc-i .dot::after{inset:11px}.ftr{padding:22px 0;font-size:13px}.nav-m summary{font-size:13px}}
