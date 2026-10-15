@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
 import {
-  BRAND_SUGGESTIONS, PRODUCT_COLUMNS, dotText, findBrand, parseDot, typeLabel, typeUnit,
+  PRODUCT_COLUMNS, dotText, findBrand, parseDot, typeLabel, typeUnit,
   type AdminProduct, type Named, type ProductType,
 } from "@/lib/product-meta";
 
@@ -44,12 +44,11 @@ function toDraft(p: AdminProduct | null, type: ProductType): Draft {
 const optNum = (v: string): number | null => (v.trim() === "" ? null : Number(v));
 
 export default function ProductForm({
-  product, newType, brands, onBrandAdded, onDone,
+  product, newType, brands, onDone,
 }: {
   product: AdminProduct | null;
   newType?: ProductType;
-  brands: Named[]; // เรียงตัวที่ใช้บ่อยขึ้นก่อน
-  onBrandAdded: (b: Named) => void;
+  brands: Named[];
   onDone: (saved: AdminProduct | null) => void;
 }) {
   const type: ProductType = product?.product_type ?? newType ?? "new_tire";
@@ -82,36 +81,8 @@ export default function ProductForm({
   }, [brandOpen]);
   function pickBrand(name: string) {
     set("brand", name);
-    setBrandNote(null);
     setBrandOpen(false);
     brandInput.current?.blur(); // เก็บแป้นพิมพ์
-  }
-
-  // เพิ่มยี่ห้อใหม่ลงระบบทันทีจากฟอร์มนี้ แล้วเลือกให้เลย (ไม่ต้องไปหน้ายี่ห้อ)
-  const [addingBrand, setAddingBrand] = useState(false);
-  const [brandNote, setBrandNote] = useState<{ ok: boolean; text: string } | null>(null);
-  async function createBrand(raw: string) {
-    const name = raw.trim().replace(/\s+/g, " ");
-    if (!name || addingBrand) return;
-    const existing = findBrand(brands, name);
-    if (existing) return pickBrand(existing.name);
-    setAddingBrand(true);
-    setBrandNote(null);
-    let row: Named | null = null;
-    const ins = await sb().from("brands").insert({ name }).select("id,name").single();
-    if (ins.data) row = ins.data as Named;
-    else if (ins.error?.code === "23505") {
-      // มีในระบบอยู่แล้ว (เช่น เพิ่งเพิ่มจากเครื่องอื่น) ดึงมาใช้แทน
-      const ex = await sb().from("brands").select("id,name").ilike("name", name.replace(/[%_\\]/g, "\\$&")).limit(1).maybeSingle();
-      if (ex.data) row = ex.data as Named;
-    }
-    setAddingBrand(false);
-    if (!row) return setBrandNote({ ok: false, text: "เพิ่มยี่ห้อไม่สำเร็จ ลองใหม่อีกครั้ง" });
-    onBrandAdded(row);
-    set("brand", row.name);
-    setBrandOpen(false);
-    brandInput.current?.blur();
-    setBrandNote({ ok: true, text: `เพิ่มยี่ห้อ "${row.name}" แล้ว` });
   }
 
   async function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -227,16 +198,6 @@ export default function ProductForm({
   const img = imageUrl(imagePath);
   const typedBrand = form.brand.trim().replace(/\s+/g, " ");
   const pickedBrand = typedBrand ? findBrand(brands, form.brand) : undefined;
-  // ปุ่มแตะเลือกยี่ห้อเร็ว: ยี่ห้อที่ใช้บ่อย 8 อันดับแรก ถ้ายังไม่ครบ 8 เติมด้วยยี่ห้อยอดนิยมที่ยังไม่มีในระบบ (แตะแล้วเพิ่มให้ทันที)
-  const QUICK = 8;
-  const quickChips: { name: string; isNew: boolean }[] = brands.slice(0, QUICK).map((b) => ({ name: b.name, isNew: false }));
-  if (pickedBrand && !quickChips.some((c) => c.name === pickedBrand.name)) {
-    quickChips.unshift({ name: pickedBrand.name, isNew: false }); // ยี่ห้อที่เลือกอยู่ต้องเห็นเสมอ
-  }
-  for (const n of BRAND_SUGGESTIONS[type]) {
-    if (quickChips.length >= QUICK) break;
-    if (!findBrand(brands, n)) quickChips.push({ name: n, isNew: true });
-  }
   // ระหว่างพิมพ์ แสดงเฉพาะยี่ห้อที่ตรงกับตัวอักษรที่พิมพ์ (ถ้ายังไม่พิมพ์แสดงทั้งหมด)
   const brandChoices = typedBrand && !pickedBrand
     ? brands.filter((b) => b.name.toLowerCase().includes(typedBrand.toLowerCase()))
@@ -267,21 +228,11 @@ export default function ProductForm({
                 id="brand-input"
                 ref={brandInput}
                 value={form.brand}
-                onChange={(e) => { set("brand", e.target.value); setBrandNote(null); setBrandOpen(true); }}
+                onChange={(e) => { set("brand", e.target.value); setBrandOpen(true); }}
                 onFocus={() => setBrandOpen(true)}
                 onBlur={() => setBrandOpen(false)}
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setBrandOpen(false);
-                  if (e.key === "Enter") {
-                    // Enter ในช่องยี่ห้อ = เลือก/เพิ่มยี่ห้อ ไม่ส่งฟอร์ม
-                    e.preventDefault();
-                    if (!typedBrand || pickedBrand) { setBrandOpen(false); e.currentTarget.blur(); }
-                    else if (brandChoices.length === 1) pickBrand(brandChoices[0].name);
-                    else createBrand(typedBrand);
-                  }
-                }}
-                enterKeyHint="done"
-                placeholder="แตะยี่ห้อด้านล่าง หรือพิมพ์ชื่อยี่ห้อ"
+                onKeyDown={(e) => { if (e.key === "Escape") setBrandOpen(false); }}
+                placeholder="แตะเพื่อเลือก หรือพิมพ์ยี่ห้อใหม่"
                 autoComplete="off"
                 role="combobox"
                 aria-expanded={brandOpen}
@@ -305,8 +256,8 @@ export default function ProductForm({
                   onMouseDown={(e) => e.preventDefault()} // ไม่ให้ช่องเสียโฟกัสก่อนแตะเลือก
                 >
                   {typedBrand && !pickedBrand && (
-                    <button type="button" className="adm-pop-new" onClick={() => createBrand(typedBrand)} disabled={addingBrand}>
-                      + เพิ่มยี่ห้อ "{typedBrand}"
+                    <button type="button" className="adm-pop-new" onClick={() => pickBrand(typedBrand)}>
+                      + ใช้ยี่ห้อใหม่ "{typedBrand}"
                     </button>
                   )}
                   {brandChoices.map((b) => {
@@ -329,33 +280,8 @@ export default function ProductForm({
                 </div>
               )}
             </div>
-            {quickChips.length > 0 && (
-              <div className="adm-chips" role="group" aria-label="เลือกยี่ห้อ">
-                {quickChips.map((c) => (
-                  <button
-                    key={c.name}
-                    type="button"
-                    className={`adm-chip ${TYPE_CLS[type]} ${c.isNew ? "new" : ""} ${!c.isNew && pickedBrand?.name === c.name ? "on" : ""}`}
-                    onClick={() => (c.isNew ? createBrand(c.name) : pickBrand(c.name))}
-                    disabled={addingBrand}
-                    aria-pressed={!c.isNew && pickedBrand?.name === c.name}
-                  >
-                    {c.isNew ? `+ ${c.name}` : c.name}
-                  </button>
-                ))}
-                <button type="button" className="adm-chip other" onClick={() => brandInput.current?.focus()}>
-                  {brands.length > quickChips.filter((c) => !c.isNew).length ? "ยี่ห้ออื่น ๆ ▾" : "พิมพ์ยี่ห้อ ▾"}
-                </button>
-              </div>
-            )}
-            {brandNote && <span className={`adm-hint ${brandNote.ok ? "ok" : "err"}`}>{brandNote.ok ? "✓ " : ""}{brandNote.text}</span>}
-            {!brandNote && addingBrand && <span className="adm-hint">กำลังเพิ่มยี่ห้อ...</span>}
-            {!brandNote && !addingBrand && typedBrand && !pickedBrand && !brandOpen && (
-              <span className="adm-hint">
-                ยี่ห้อใหม่ "{typedBrand}"{" "}
-                <button type="button" className="adm-linkbtn" onClick={() => createBrand(typedBrand)}>เพิ่มยี่ห้อนี้เลย</button>
-                {" "}หรือกดบันทึก ระบบจะเพิ่มให้เอง
-              </span>
+            {typedBrand && !pickedBrand && !brandOpen && (
+              <span className="adm-hint">ยี่ห้อใหม่ ระบบจะเพิ่ม "{typedBrand}" ให้เมื่อกดบันทึก</span>
             )}
           </div>
           <label className="adm-f">ชื่อรุ่น *

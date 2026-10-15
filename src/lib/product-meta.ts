@@ -92,17 +92,3 @@ export const findBrand = (brands: Named[], typed: string): Named | undefined =>
 // สินค้าที่ติดตามรายเส้นไม่ต้องแจ้งเตือน "ใกล้หมด" (มีได้แค่ 0/1)
 export const isLowStock = (p: AdminProduct) =>
   p.is_active && !p.is_individual && p.stock_qty <= p.low_stock_threshold;
-
-// ยี่ห้อยอดนิยมที่แนะนำให้แตะเพิ่มได้ทันทีในฟอร์มสินค้า (แก้รายชื่อได้ตามร้าน)
-export const BRAND_SUGGESTIONS: Record<ProductType, string[]> = {
-  new_tire: ["Michelin", "Bridgestone", "Yokohama", "Dunlop", "Continental", "Goodyear", "Maxxis", "Deestone", "Toyo", "Hankook", "Pirelli", "Falken"],
-  used_tire: ["Michelin", "Bridgestone", "Yokohama", "Dunlop", "Continental", "Goodyear", "Maxxis", "Deestone", "Toyo", "Hankook", "Pirelli", "Falken"],
-  wheel: ["Lenso", "Maxx", "Enkei", "Rays", "OZ Racing", "BBS", "Work", "Advan", "Weds", "Vossen"],
-};
-
-// เรียงยี่ห้อที่ใช้กับสินค้าบ่อยขึ้นก่อน (เท่ากันเรียงตามชื่อ) ให้แตะเลือกได้เร็วที่สุด
-export function sortBrandsByUse(brands: Named[], products: { brand_id: string }[]): Named[] {
-  const use = new Map<string, number>();
-  for (const p of products) use.set(p.brand_id, (use.get(p.brand_id) ?? 0) + 1);
-  return [...brands].sort((a, b) => (use.get(b.id) ?? 0) - (use.get(a.id) ?? 0) || a.name.localeCompare(b.name));
-}

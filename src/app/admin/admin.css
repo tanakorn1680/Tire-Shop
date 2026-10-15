@@ -213,31 +213,3 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-pop-o svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .adm-pop-new{justify-content:flex-start;color:var(--blue);background:#f3f8ff}
 .adm-pop-new:hover{background:#e8f1fe}
-
-/* ===== หน้าหลัก: ปุ่มเพิ่มสินค้าแยกตามประเภท ===== */
-.adm-quick{margin-bottom:18px}
-.adm-quick h2{font-size:15px;margin-bottom:8px}
-.adm-quick-g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.adm-quick-b{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:76px;padding:10px 6px;border-radius:14px;color:#fff;text-align:center;font-weight:700;box-shadow:0 2px 6px rgba(22,33,46,.12)}
-.adm-quick-b span{font-size:24px;line-height:1;font-weight:600}
-.adm-quick-b b{font-size:15px;line-height:1.25}
-.adm-quick-b.t-new{background:var(--c-blue)}
-.adm-quick-b.t-used{background:var(--c-green)}
-.adm-quick-b.t-wheel{background:var(--c-purple)}
-.adm-quick-b:hover{filter:brightness(.94)}
-.adm-quick-b:active{transform:scale(.98)}
-
-/* ===== ฟอร์มสินค้า: ปุ่มแตะเลือก/เพิ่มยี่ห้อเร็ว ===== */
-.adm-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
-.adm-chip{--sel:var(--blue);min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--navy);font:inherit;font-size:15px;font-weight:600;cursor:pointer}
-.adm-chip.t-new{--sel:var(--c-blue)}
-.adm-chip.t-used{--sel:var(--c-green)}
-.adm-chip.t-wheel{--sel:var(--c-purple)}
-.adm-chip:hover{border-color:var(--sel)}
-.adm-chip.on{background:var(--sel);border-color:var(--sel);color:#fff}
-.adm-chip.new{border-style:dashed;color:#4b5563;background:#fafbfd;font-weight:500}
-.adm-chip.other{border-style:dashed;color:var(--blue);font-weight:600}
-.adm-chip:disabled{opacity:.6;cursor:default}
-.adm-hint.ok{color:#1a7f37;font-weight:600}
-.adm-hint.err{color:#b42318;font-weight:600}
-.adm-linkbtn{border:none;background:none;padding:0;font:inherit;font-weight:700;color:var(--blue);text-decoration:underline;cursor:pointer}
