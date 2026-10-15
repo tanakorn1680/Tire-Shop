@@ -25,6 +25,8 @@ export type AdminProduct = {
   image_path: string | null; category_id: string | null; is_active: boolean;
 };
 export type Named = { id: string; name: string };
+// ประเภทสินค้าที่แอดมินเพิ่มเอง (product_type = รูปแบบฟอร์มกรอกข้อมูล)
+export type Category = { id: string; name: string; product_type: ProductType };
 
 // คอลัมน์ที่ดึงจากตาราง products (ใช้ซ้ำทั้งหน้ารายการและหลังบันทึก)
 export const PRODUCT_COLUMNS =

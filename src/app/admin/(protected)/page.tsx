@@ -1,7 +1,7 @@
 import Link from "next/link";
 import AddProductHome from "./AddProductHome";
 import { sbServer } from "@/lib/supabase-server";
-import { PRODUCT_TYPES, baht, typeLabel, typeUnit, type ProductType } from "@/lib/product-meta";
+import { PRODUCT_TYPES, baht, typeLabel, typeUnit, type Category, type ProductType } from "@/lib/product-meta";
 
 export const dynamic = "force-dynamic";
 
@@ -12,12 +12,13 @@ type Row = {
 
 export default async function AdminHome() {
   const supabase = await sbServer();
-  const [products, brands] = await Promise.all([
+  const [products, brands, categories] = await Promise.all([
     supabase
       .from("products")
       .select("id,name,product_type,is_active,is_individual,stock_qty,low_stock_threshold,cost_price,brands(name)")
       .returns<Row[]>(),
     supabase.from("brands").select("id,name").order("name"),
+    supabase.from("categories").select("id,name,product_type").order("sort_order").order("name").returns<Category[]>(),
   ]);
 
   if (products.error) {
@@ -39,7 +40,7 @@ export default async function AdminHome() {
     .sort((a, b) => a.stock_qty - b.stock_qty);
 
   return (
-    <AddProductHome brands={brands.data ?? []}>
+    <AddProductHome brands={brands.data ?? []} categories={categories.data ?? []}>
 
       {rows.length === 0 && <p className="adm-sub">ยังไม่มีสินค้า กดปุ่ม "+ เพิ่มสินค้า" ได้เลย (พิมพ์ยี่ห้อใหม่ในฟอร์มได้ ระบบเพิ่มให้เอง)</p>}
 

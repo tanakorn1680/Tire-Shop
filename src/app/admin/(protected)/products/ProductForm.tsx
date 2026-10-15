@@ -3,11 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
-import GearMenu from "./GearMenu";
 import { imageUrl } from "@/lib/supabase";
 import {
-  PRODUCT_COLUMNS, PRODUCT_TYPES, dotText, findBrand, parseDot, typeLabel, typeUnit,
-  type AdminProduct, type Named, type ProductType,
+  PRODUCT_COLUMNS, dotText, findBrand, parseDot, typeLabel, typeUnit,
+  type AdminProduct, type Category, type Named, type ProductType,
 } from "@/lib/product-meta";
 
 type Draft = {
@@ -46,16 +45,19 @@ function toDraft(p: AdminProduct | null, type: ProductType): Draft {
 const optNum = (v: string): number | null => (v.trim() === "" ? null : Number(v));
 
 export default function ProductForm({
-  product, newType, brands, onDone,
+  product, brands, categories, onDone,
 }: {
   product: AdminProduct | null;
-  newType?: ProductType;
   brands: Named[];
+  categories: Category[];
   onDone: (saved: AdminProduct | null) => void;
 }) {
-  // เพิ่มสินค้าใหม่: เลือกประเภทในฟอร์มได้เลย ไม่ต้องเปลี่ยนหน้า (แก้ไขสินค้าเดิมเปลี่ยนประเภทไม่ได้)
-  const [newT, setNewT] = useState<ProductType>(newType ?? "new_tire");
-  const type: ProductType = product?.product_type ?? newT;
+  // ประเภทสินค้า: เริ่มว่างไว้ รอแอดมินเพิ่มประเภทแล้วเลือก (แก้ไขสินค้าเดิมเลือกได้เฉพาะประเภทที่ใช้ฟอร์มแบบเดียวกัน)
+  const [categoryId, setCategoryId] = useState(product?.category_id ?? "");
+  const chosen = categories.find((c) => c.id === categoryId);
+  const type: ProductType = product?.product_type ?? chosen?.product_type ?? "new_tire";
+  const typeChoices = product ? categories.filter((c) => c.product_type === product.product_type) : categories;
+  const title = chosen?.name ?? (product ? typeLabel(product.product_type) : "สินค้า");
   const router = useRouter();
   // กลับจากแท็บเพิ่ม/ลบยี่ห้อ → โหลดรายการยี่ห้อใหม่ (ข้อมูลที่กรอกค้างในฟอร์มยังอยู่)
   useEffect(() => {
@@ -82,10 +84,12 @@ export default function ProductForm({
 
   // แผงเลือกประเภทสินค้า (เฉพาะตอนเพิ่มใหม่)
   const [typeOpen, setTypeOpen] = useState(false);
-  function pickType(v: ProductType) {
+  function pickType(c: Category) {
+    const v = c.product_type;
     const wasUsed = type === "used_tire";
-    setNewT(v);
+    setCategoryId(c.id);
     setTypeOpen(false);
+    if (product) return;
     setForm((f) => ({
       ...f,
       is_individual: v === "used_tire",
@@ -131,6 +135,7 @@ export default function ProductForm({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    if (!chosen && !product) return setErr("กรุณาเลือกประเภทสินค้า (ถ้ายังไม่มี ให้กดเพิ่มประเภทสินค้าก่อน)");
 
     const width_mm = optNum(form.width_mm), aspect_ratio = optNum(form.aspect_ratio), rim_inch = optNum(form.rim_inch);
     const cost_price = Number(form.cost_price), sale_price = Number(form.sale_price);
@@ -165,6 +170,7 @@ export default function ProductForm({
     const dotOk = !isWheel && dot !== "invalid" ? dot : null;
     const payload = {
       product_type: type,
+      category_id: chosen?.id ?? null,
       name: form.name.trim(),
       model: form.model.trim() || null,
       sku: form.sku.trim() || null,
@@ -240,20 +246,18 @@ export default function ProductForm({
 
   return (
     <form className="adm-card adm-form" onSubmit={onSubmit}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-        <h1 style={{ fontSize: 17 }}>{product ? "แก้ไข" : "เพิ่ม"}{typeLabel(type)}</h1>
-        <GearMenu newTab />
-      </div>
+      <h1 style={{ fontSize: 17 }}>{product ? "แก้ไข" : "เพิ่ม"}{title}</h1>
 
       <fieldset className="adm-fs">
         <legend>ข้อมูลสินค้า</legend>
-        {!product && (
+        {(
           <div className="adm-f" style={{ marginBottom: 12 }}>
             <label htmlFor="type-input">ประเภทสินค้า *</label>
             <div className={`adm-combo ${TYPE_CLS[type]} ${typeOpen ? "open" : ""}`}>
               <input
                 id="type-input"
-                value={typeLabel(type)}
+                value={chosen?.name ?? ""}
+                placeholder="แตะเพื่อเลือกประเภทสินค้า"
                 readOnly
                 inputMode="none"
                 onClick={() => { setBrandOpen(false); setTypeOpen((v) => !v); }}
@@ -275,19 +279,21 @@ export default function ProductForm({
               </button>
               {typeOpen && (
                 <div id="type-pop" className="adm-pop" role="listbox" onMouseDown={(e) => e.preventDefault()}>
-                  {PRODUCT_TYPES.map((o) => (
+                  {typeChoices.map((o) => (
                     <button
-                      key={o.value}
+                      key={o.id}
                       type="button"
                       role="option"
-                      aria-selected={o.value === type}
-                      className={`adm-pop-o ${o.value === type ? "on" : ""}`}
-                      onClick={() => pickType(o.value)}
+                      aria-selected={o.id === categoryId}
+                      className={`adm-pop-o ${o.id === categoryId ? "on" : ""}`}
+                      onClick={() => pickType(o)}
                     >
-                      <span>{o.label}</span>
-                      {o.value === type && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
+                      <span>{o.name}</span>
+                      {o.id === categoryId && <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}
                     </button>
                   ))}
+                  {typeChoices.length === 0 && <span className="adm-pop-t">ยังไม่มีประเภทสินค้า กดปุ่มด้านล่างเพื่อเพิ่มก่อน</span>}
+                  <a className="adm-pop-link" href="/admin/categories" target="_blank" rel="noopener">+ เพิ่ม/ลบประเภทสินค้า</a>
                 </div>
               )}
             </div>
@@ -350,6 +356,7 @@ export default function ProductForm({
                     );
                   })}
                   {brandChoices.length === 0 && !typedBrand && <span className="adm-pop-t">พิมพ์ชื่อยี่ห้อได้เลย</span>}
+                  <a className="adm-pop-link" href="/admin/brands" target="_blank" rel="noopener">+ เพิ่ม/ลบยี่ห้อ</a>
                 </div>
               )}
             </div>

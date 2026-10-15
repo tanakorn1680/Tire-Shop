@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
 import {
-  PRODUCT_TYPES, baht, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
-  type AdminProduct, type Named, type ProductType,
+  baht, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
+  type AdminProduct, type Category, type Named, type ProductType,
 } from "@/lib/product-meta";
 import ProductForm from "./ProductForm";
 import GearMenu from "./GearMenu";
@@ -16,15 +16,15 @@ const PAGE = 50;
 const CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
 
 export default function ProductsManager({
-  initial, brands, canDelete, initialTab, initialQ, initialAdd = false,
+  initial, brands, categories, canDelete, initialQ, initialAdd = false,
 }: {
-  initial: AdminProduct[]; brands: Named[];
-  canDelete: boolean; initialTab: ProductType | "all"; initialQ: string; initialAdd?: boolean;
+  initial: AdminProduct[]; brands: Named[]; categories: Category[];
+  canDelete: boolean; initialQ: string; initialAdd?: boolean;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
-  const [editing, setEditing] = useState<AdminProduct | ProductType | null>(initialAdd ? "new_tire" : null); // ProductType = เพิ่มใหม่
-  const [tabRaw, setTab] = useState<ProductType | "all">(initialTab);
+  const [editing, setEditing] = useState<AdminProduct | "new" | null>(initialAdd ? "new" : null); // "new" = เพิ่มใหม่
+  const [tabRaw, setTab] = useState<string>("all"); // "all" หรือ id ของประเภทสินค้า
   const [q, setQ] = useState(initialQ);
   const [lowOnly, setLowOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE);
@@ -33,16 +33,16 @@ export default function ProductsManager({
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: items.length };
-    for (const t of PRODUCT_TYPES) c[t.value] = items.filter((p) => p.product_type === t.value).length;
+    for (const t of categories) c[t.id] = items.filter((p) => p.category_id === t.id).length;
     return c;
-  }, [items]);
+  }, [items, categories]);
 
   // แท็บประเภทจะปรากฏเมื่อมีสินค้าประเภทนั้นแล้วเท่านั้น (ถ้าประเภทที่เลือกอยู่ไม่เหลือสินค้า ให้กลับไปแท็บทั้งหมด)
-  const tab: ProductType | "all" = tabRaw !== "all" && !counts[tabRaw] ? "all" : tabRaw;
-  const typesInUse = PRODUCT_TYPES.filter((t) => counts[t.value] > 0);
+  const tab: string = tabRaw !== "all" && !counts[tabRaw] ? "all" : tabRaw;
+  const typesInUse = categories.filter((t) => counts[t.id] > 0);
 
   const filtered = useMemo(
-    () => items.filter((p) => (tab === "all" || p.product_type === tab) && (!lowOnly || isLowStock(p)) && matchesQuery(p, q)),
+    () => items.filter((p) => (tab === "all" || p.category_id === tab) && (!lowOnly || isLowStock(p)) && matchesQuery(p, q)),
     [items, tab, q, lowOnly],
   );
   const shown = filtered.slice(0, limit);
@@ -79,12 +79,12 @@ export default function ProductsManager({
   }
 
   if (editing) {
-    const isNew = typeof editing === "string";
+    const isNew = editing === "new";
     return (
       <ProductForm
         product={isNew ? null : editing}
-        newType={isNew ? editing : undefined}
         brands={brands}
+        categories={categories}
         onDone={(saved) => {
           if (saved) { upsertLocal(saved); router.refresh(); }
           setEditing(null);
@@ -106,8 +106,8 @@ export default function ProductsManager({
             ทั้งหมด<span>{counts.all}</span>
           </button>
           {typesInUse.map((t) => (
-            <button key={t.value} type="button" className={`adm-tab ${CLS[t.value]} ${tab === t.value ? "on" : ""}`} onClick={() => { setTab(t.value); setLimit(PAGE); }}>
-              {t.label}<span>{counts[t.value]}</span>
+            <button key={t.id} type="button" className={`adm-tab ${CLS[t.product_type]} ${tab === t.id ? "on" : ""}`} onClick={() => { setTab(t.id); setLimit(PAGE); }}>
+              {t.name}<span>{counts[t.id]}</span>
             </button>
           ))}
         </div>
@@ -138,7 +138,7 @@ export default function ProductsManager({
 
       {items.length === 0 ? (
         <div className="adm-empty">
-          <p>ยังไม่มีสินค้า กด "+ เพิ่มสินค้า" แล้วเลือกประเภทได้เลย</p>
+          <p>{categories.length === 0 ? "ยังไม่มีประเภทสินค้า กดปุ่มเฟืองด้านบน แล้วเลือก \"เพิ่ม/ลบประเภทสินค้า\" เพื่อเพิ่มก่อน" : "ยังไม่มีสินค้า กด \"+ เพิ่มสินค้า\" ได้เลย"}</p>
           <p style={{ marginTop: 8 }}>
             {brands.length === 0
               ? "ยี่ห้อพิมพ์ในฟอร์มสินค้าได้เลย ระบบจะเพิ่มให้เอง หรือจะเพิ่มยี่ห้อไว้ก่อนก็ได้"
@@ -175,7 +175,7 @@ export default function ProductsManager({
                       </small>
                     </td>
                     <td data-label="ขนาด">{specText(p) || "-"}</td>
-                    <td data-label="ประเภท"><span className={`adm-pill ${CLS[p.product_type]}`}>{typeLabel(p.product_type)}</span></td>
+                    <td data-label="ประเภท"><span className={`adm-pill ${CLS[p.product_type]}`}>{categories.find((c) => c.id === p.category_id)?.name ?? typeLabel(p.product_type)}</span></td>
                     <td className="num" data-label="คงเหลือ">
                       <span className={isLowStock(p) ? "adm-low" : ""}>{stock}</span>
                       {isLowStock(p) && <span className="adm-row-tag off" style={{ marginLeft: 6 }}>ใกล้หมด</span>}

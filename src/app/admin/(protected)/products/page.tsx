@@ -1,5 +1,5 @@
 import { getAdminUser, sbServer } from "@/lib/supabase-server";
-import { isProductType, PRODUCT_COLUMNS, type AdminProduct } from "@/lib/product-meta";
+import { PRODUCT_COLUMNS, type AdminProduct, type Category } from "@/lib/product-meta";
 import ProductsManager from "./ProductsManager";
 
 export const dynamic = "force-dynamic";
@@ -9,18 +9,19 @@ type ProductRow = Omit<AdminProduct, "brand_name"> & { brands: { name: string } 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; q?: string; add?: string }>;
+  searchParams: Promise<{ q?: string; add?: string }>;
 }) {
-  const { type, q, add } = await searchParams;
+  const { q, add } = await searchParams;
   const { role } = await getAdminUser();
   const supabase = await sbServer();
-  const [products, brands] = await Promise.all([
+  const [products, brands, categories] = await Promise.all([
     supabase
       .from("products")
       .select(PRODUCT_COLUMNS)
       .order("created_at", { ascending: false })
       .returns<ProductRow[]>(),
     supabase.from("brands").select("id,name").order("name"),
+    supabase.from("categories").select("id,name,product_type").order("sort_order").order("name").returns<Category[]>(),
   ]);
 
   const items: AdminProduct[] = (products.data ?? []).map(({ brands, ...p }) => ({
@@ -36,17 +37,17 @@ export default async function ProductsPage({
           <p>ราคาต้นทุนและจำนวนสต็อกจริงไม่แสดงบนหน้าเว็บลูกค้า</p>
         </div>
       </div>
-      {products.error ? (
+      {products.error || categories.error ? (
         <p className="adm-msg err">
-          โหลดสินค้าไม่สำเร็จ — ถ้าเพิ่งอัปเดตโค้ด ให้รัน migration 0004_product_types.sql ใน Supabase SQL Editor ก่อน
+          โหลดสินค้าไม่สำเร็จ — ถ้าเพิ่งอัปเดตโค้ด ให้รัน migration 0004_product_types.sql และ 0005_category_kind.sql ใน Supabase SQL Editor ก่อน
           (ข้อมูลเดิมยังอยู่ครบ ไม่ได้หายไป)
         </p>
       ) : (
         <ProductsManager
           initial={items}
           brands={brands.data ?? []}
+          categories={categories.data ?? []}
           canDelete={role === "owner"}
-          initialTab={isProductType(type) ? type : "all"}
           initialQ={q ?? ""}
           initialAdd={add === "1"}
         />
