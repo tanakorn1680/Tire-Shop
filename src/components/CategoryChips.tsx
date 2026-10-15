@@ -3,7 +3,6 @@ import type { Named } from "@/lib/supabase";
 
 // active: undefined = ไม่ไฮไลต์ (หน้าแรก), "" = ทั้งหมด, id = ประเภทที่เลือก
 export default function CategoryChips({ items, active }: { items: Named[]; active?: string }) {
-  if (!items.length) return null;
   const on = (id: string) => (active === id ? "on" : "");
   return (
     <div className="chips">

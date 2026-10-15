@@ -244,7 +244,7 @@ export default function ProductForm({
                 value={typeLabel(type)}
                 readOnly
                 inputMode="none"
-                onClick={() => setTypeOpen((v) => !v)}
+                onClick={() => { setBrandOpen(false); setTypeOpen((v) => !v); }}
                 onBlur={() => setTypeOpen(false)}
                 style={{ cursor: "pointer" }}
                 role="combobox"
@@ -257,7 +257,7 @@ export default function ProductForm({
                 tabIndex={-1}
                 aria-label={typeOpen ? "ปิดรายการประเภท" : "เปิดรายการประเภท"}
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => setTypeOpen((v) => !v)}
+                onClick={() => { setBrandOpen(false); setTypeOpen((v) => !v); }}
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
               </button>
@@ -289,8 +289,8 @@ export default function ProductForm({
                 id="brand-input"
                 ref={brandInput}
                 value={form.brand}
-                onChange={(e) => { set("brand", e.target.value); setBrandOpen(true); }}
-                onFocus={() => setBrandOpen(true)}
+                onChange={(e) => { set("brand", e.target.value); setTypeOpen(false); setBrandOpen(true); }}
+                onFocus={() => { setTypeOpen(false); setBrandOpen(true); }}
                 onBlur={() => setBrandOpen(false)}
                 onKeyDown={(e) => { if (e.key === "Escape") setBrandOpen(false); }}
                 placeholder="แตะเพื่อเลือก หรือพิมพ์ยี่ห้อใหม่"

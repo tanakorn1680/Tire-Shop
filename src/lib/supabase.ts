@@ -31,13 +31,16 @@ export const getSite = cache(async () => {
   let categories: Named[] = [];
   let services: Named[] = [];
   if (sb) {
-    const [s, c, v] = await Promise.all([
+    const [s, c, v, u] = await Promise.all([
       sb.from("store_settings").select("store_name,tagline,phone,hours,address,line_url").eq("id", 1).maybeSingle(),
       sb.from("categories").select("id,name").order("sort_order").order("name"),
       sb.from("services").select("id,name,description").eq("is_active", true).order("sort_order"),
+      sb.from("products_public").select("category_id"),
     ]);
     settings = s.data ?? {};
-    categories = c.data ?? [];
+    // แสดงเฉพาะประเภทที่มีสินค้าแล้ว (ประเภทที่ยังว่างไม่แสดงฝั่งลูกค้า)
+    const used = new Set(((u.data ?? []) as { category_id: string | null }[]).map((p) => p.category_id));
+    categories = (c.data ?? []).filter((x) => used.has(x.id));
     services = v.data ?? [];
   }
   return { settings, categories, services };
