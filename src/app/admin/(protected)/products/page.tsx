@@ -9,19 +9,18 @@ type ProductRow = Omit<AdminProduct, "brand_name"> & { brands: { name: string } 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; q?: string }>;
 }) {
-  const { type } = await searchParams;
+  const { type, q } = await searchParams;
   const { role } = await getAdminUser();
   const supabase = await sbServer();
-  const [products, brands, categories] = await Promise.all([
+  const [products, brands] = await Promise.all([
     supabase
       .from("products")
       .select(PRODUCT_COLUMNS)
       .order("created_at", { ascending: false })
       .returns<ProductRow[]>(),
     supabase.from("brands").select("id,name").order("name"),
-    supabase.from("categories").select("id,name").order("sort_order").order("name"),
   ]);
 
   const items: AdminProduct[] = (products.data ?? []).map(({ brands, ...p }) => ({
@@ -46,9 +45,9 @@ export default async function ProductsPage({
         <ProductsManager
           initial={items}
           brands={brands.data ?? []}
-          categories={categories.data ?? []}
           canDelete={role === "owner"}
           initialTab={isProductType(type) ? type : "all"}
+          initialQ={q ?? ""}
         />
       )}
     </>

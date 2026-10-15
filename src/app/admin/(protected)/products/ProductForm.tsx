@@ -4,24 +4,24 @@ import { useState } from "react";
 import { sb } from "@/lib/supabase-browser";
 import { imageUrl } from "@/lib/supabase";
 import {
-  PRODUCT_COLUMNS, dotText, parseDot, typeLabel, typeUnit,
+  PRODUCT_COLUMNS, dotText, findBrand, parseDot, typeLabel, typeUnit,
   type AdminProduct, type Named, type ProductType,
 } from "@/lib/product-meta";
 
 type Draft = {
-  brand_id: string; name: string; model: string; sku: string; storage_location: string;
+  brand: string; name: string; model: string; sku: string; storage_location: string;
   width_mm: string; aspect_ratio: string; rim_inch: string; load_index: string; speed_rating: string;
   dot: string; tread_depth_mm: string; condition_note: string; defect_note: string; repair_note: string;
   wheel_width_in: string; wheel_pcd: string; wheel_bolts: string; wheel_offset_mm: string;
   cost_price: string; sale_price: string; stock_qty: string; low_stock_threshold: string;
-  category_id: string; is_individual: boolean; is_active: boolean;
+  is_individual: boolean; is_active: boolean;
 };
 
 const s = (v: string | number | null | undefined) => (v === null || v === undefined ? "" : String(v));
 
 function toDraft(p: AdminProduct | null, type: ProductType): Draft {
   return {
-    brand_id: p?.brand_id ?? "", name: p?.name ?? "", model: s(p?.model), sku: s(p?.sku),
+    brand: p?.brand_name ?? "", name: p?.name ?? "", model: s(p?.model), sku: s(p?.sku),
     storage_location: s(p?.storage_location),
     width_mm: s(p?.width_mm), aspect_ratio: s(p?.aspect_ratio), rim_inch: s(p?.rim_inch),
     load_index: s(p?.load_index), speed_rating: s(p?.speed_rating),
@@ -33,7 +33,6 @@ function toDraft(p: AdminProduct | null, type: ProductType): Draft {
     cost_price: s(p?.cost_price), sale_price: s(p?.sale_price),
     stock_qty: p ? String(p.stock_qty) : type === "used_tire" ? "1" : "0",
     low_stock_threshold: p ? String(p.low_stock_threshold) : "4",
-    category_id: p?.category_id ?? "",
     is_individual: p ? p.is_individual : type === "used_tire", // ยางมือสองติดตามรายเส้นเป็นค่าเริ่มต้น
     is_active: p?.is_active ?? true,
   };
@@ -43,12 +42,11 @@ function toDraft(p: AdminProduct | null, type: ProductType): Draft {
 const optNum = (v: string): number | null => (v.trim() === "" ? null : Number(v));
 
 export default function ProductForm({
-  product, newType, brands, categories, onDone,
+  product, newType, brands, onDone,
 }: {
   product: AdminProduct | null;
   newType?: ProductType;
   brands: Named[];
-  categories: Named[];
   onDone: (saved: AdminProduct | null) => void;
 }) {
   const type: ProductType = product?.product_type ?? newType ?? "new_tire";
@@ -96,7 +94,7 @@ export default function ProductForm({
     const wWidth = optNum(form.wheel_width_in), bolts = optNum(form.wheel_bolts), offset = optNum(form.wheel_offset_mm);
     const dot = parseDot(form.dot);
 
-    if (!form.brand_id) return setErr("กรุณาเลือกยี่ห้อ");
+    if (!form.brand.trim()) return setErr("กรุณาใส่ยี่ห้อ");
     if (!form.name.trim()) return setErr("กรุณากรอกชื่อสินค้า");
     if (isWheel) {
       if (!rim_inch || Number.isNaN(rim_inch) || rim_inch < 8 || rim_inch > 30) return setErr("กรุณากรอกขนาดล้อ (นิ้ว) 8–30");
@@ -122,7 +120,6 @@ export default function ProductForm({
     const dotOk = !isWheel && dot !== "invalid" ? dot : null;
     const payload = {
       product_type: type,
-      brand_id: form.brand_id,
       name: form.name.trim(),
       model: form.model.trim() || null,
       sku: form.sku.trim() || null,
@@ -145,15 +142,26 @@ export default function ProductForm({
       cost_price, sale_price, stock_qty,
       low_stock_threshold: Number.isNaN(low_stock_threshold) ? 4 : low_stock_threshold,
       is_individual: form.is_individual,
-      category_id: form.category_id || null,
       image_path: imagePath,
       is_active: form.is_active,
     };
 
     setSaving(true);
+
+    // ยี่ห้อ: มีอยู่แล้วใช้เลย ถ้ายังไม่มีเพิ่มให้อัตโนมัติ (ไม่ต้องไปหน้าอื่น)
+    let brandId = findBrand(brands, form.brand)?.id;
+    if (!brandId) {
+      const { data: nb, error: be } = await sb().from("brands").insert({ name: form.brand.trim().replace(/\s+/g, " ") }).select("id").single();
+      if (be || !nb) {
+        setSaving(false);
+        return setErr("เพิ่มยี่ห้อไม่สำเร็จ ลองใหม่อีกครั้ง");
+      }
+      brandId = (nb as { id: string }).id;
+    }
+
     const q = product
-      ? sb().from("products").update(payload).eq("id", product.id)
-      : sb().from("products").insert(payload);
+      ? sb().from("products").update({ ...payload, brand_id: brandId }).eq("id", product.id)
+      : sb().from("products").insert({ ...payload, brand_id: brandId });
     const { data, error } = await q.select(PRODUCT_COLUMNS).single();
     setSaving(false);
 
@@ -175,10 +183,11 @@ export default function ProductForm({
         <legend>ข้อมูลสินค้า</legend>
         <div className="adm-f-row">
           <label className="adm-f">ยี่ห้อ *
-            <select value={form.brand_id} onChange={(e) => set("brand_id", e.target.value)}>
-              <option value="">เลือกยี่ห้อ</option>
-              {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
+            <input list="brand-list" value={form.brand} onChange={(e) => set("brand", e.target.value)} placeholder="พิมพ์ หรือเลือกจากรายการ" autoComplete="off" />
+            <datalist id="brand-list">
+              {brands.map((b) => <option key={b.id} value={b.name} />)}
+            </datalist>
+            <span className="adm-hint">ถ้ายังไม่มียี่ห้อนี้ ระบบจะเพิ่มให้อัตโนมัติ</span>
           </label>
           <label className="adm-f">ชื่อรุ่น *
             <input value={form.name} onChange={(e) => set("name", e.target.value)} placeholder={isWheel ? "เช่น Enkei RPF1" : "เช่น Primacy 4"} />
@@ -194,14 +203,6 @@ export default function ProductForm({
           <label className="adm-f">ตำแหน่งจัดเก็บ
             <input value={form.storage_location} onChange={(e) => set("storage_location", e.target.value)} placeholder="เช่น ชั้น A แถว 2" />
           </label>
-          {categories.length > 0 && (
-            <label className="adm-f">หมวดหมู่บนหน้าเว็บ
-              <select value={form.category_id} onChange={(e) => set("category_id", e.target.value)}>
-                <option value="">ไม่ระบุ</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </label>
-          )}
         </div>
       </fieldset>
 

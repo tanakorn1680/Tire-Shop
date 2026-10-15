@@ -84,6 +84,11 @@ export function matchesQuery(p: AdminProduct, query: string): boolean {
   return tokens.every((t) => hay.includes(t));
 }
 
+// หายี่ห้อที่มีอยู่แล้วจากชื่อที่พิมพ์ (ไม่สนตัวพิมพ์เล็ก/ใหญ่ และช่องว่างเกิน)
+const brandKey = (s: string) => s.trim().replace(/\s+/g, " ").toLowerCase();
+export const findBrand = (brands: Named[], typed: string): Named | undefined =>
+  brands.find((b) => brandKey(b.name) === brandKey(typed));
+
 // สินค้าที่ติดตามรายเส้นไม่ต้องแจ้งเตือน "ใกล้หมด" (มีได้แค่ 0/1)
 export const isLowStock = (p: AdminProduct) =>
   p.is_active && !p.is_individual && p.stock_qty <= p.low_stock_threshold;

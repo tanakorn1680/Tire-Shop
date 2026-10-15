@@ -11,18 +11,19 @@ import {
 import ProductForm from "./ProductForm";
 
 const PAGE = 50;
+const CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
 
 export default function ProductsManager({
-  initial, brands, categories, canDelete, initialTab,
+  initial, brands, canDelete, initialTab, initialQ,
 }: {
-  initial: AdminProduct[]; brands: Named[]; categories: Named[];
-  canDelete: boolean; initialTab: ProductType | "all";
+  initial: AdminProduct[]; brands: Named[];
+  canDelete: boolean; initialTab: ProductType | "all"; initialQ: string;
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const [editing, setEditing] = useState<AdminProduct | ProductType | null>(null); // ProductType = เพิ่มใหม่
   const [tab, setTab] = useState<ProductType | "all">(initialTab);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(initialQ);
   const [lowOnly, setLowOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE);
   const [busy, setBusy] = useState(false);
@@ -78,7 +79,6 @@ export default function ProductsManager({
         product={isNew ? null : editing}
         newType={isNew ? editing : undefined}
         brands={brands}
-        categories={categories}
         onDone={(saved) => {
           if (saved) { upsertLocal(saved); router.refresh(); }
           setEditing(null);
@@ -96,7 +96,7 @@ export default function ProductsManager({
           ทั้งหมด<span>{counts.all}</span>
         </button>
         {PRODUCT_TYPES.map((t) => (
-          <button key={t.value} type="button" className={`adm-tab ${tab === t.value ? "on" : ""}`} onClick={() => { setTab(t.value); setLimit(PAGE); }}>
+          <button key={t.value} type="button" className={`adm-tab ${CLS[t.value]} ${tab === t.value ? "on" : ""}`} onClick={() => { setTab(t.value); setLimit(PAGE); }}>
             {t.label}<span>{counts[t.value]}</span>
           </button>
         ))}
@@ -147,9 +147,9 @@ export default function ProductsManager({
                       </small>
                     </td>
                     <td data-label="ขนาด">{specText(p) || "-"}</td>
-                    <td data-label="ประเภท">{typeLabel(p.product_type)}</td>
+                    <td data-label="ประเภท"><span className={`adm-pill ${CLS[p.product_type]}`}>{typeLabel(p.product_type)}</span></td>
                     <td className="num" data-label="คงเหลือ">
-                      {stock}
+                      <span className={isLowStock(p) ? "adm-low" : ""}>{stock}</span>
                       {isLowStock(p) && <span className="adm-row-tag off" style={{ marginLeft: 6 }}>ใกล้หมด</span>}
                       {!p.is_active && <span className="adm-row-tag off" style={{ marginLeft: 6 }}>ซ่อน</span>}
                     </td>
