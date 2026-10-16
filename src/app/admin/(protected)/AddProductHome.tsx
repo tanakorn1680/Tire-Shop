@@ -34,22 +34,18 @@ export default function AddProductHome({ brands, categories, canDelete, children
       <div className="adm-pg-hd">
         <div>
           <h1>หน้าหลัก</h1>
-          <p>ดูของในร้านได้ทั้งหมดที่นี่</p>
+          <p>ภาพรวมสินค้าและสต็อกของร้าน</p>
         </div>
-      </div>
-      <div className="adm-quick">
-        <button
-          type="button"
-          className="btn btn-dark"
-          onClick={() => { setOpen(true); window.scrollTo(0, 0); }}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-          เพิ่มสินค้า
-        </button>
-        <Link href="/admin/services" className="btn btn-dark btn-white">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-          เพิ่มบริการ
-        </Link>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn btn-dark"
+            onClick={() => { setOpen(true); window.scrollTo(0, 0); }}
+          >
+            + เพิ่มสินค้า
+          </button>
+          <Link href="/admin/services" className="btn btn-dark btn-white">+ เพิ่มบริการ</Link>
+        </div>
       </div>
       {children}
     </>

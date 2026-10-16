@@ -85,13 +85,7 @@ export default async function AdminHome() {
 
       {setupSteps.length > 0 && <SetupCard steps={setupSteps} />}
 
-      {rows.length === 0 && (
-        <div className="adm-empty">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><path d="M3.3 7L12 12l8.7-5M12 22V12" /></svg>
-          <b>ยังไม่มีสินค้า</b>
-          <small>กดปุ่ม "เพิ่มสินค้า" ด้านบนได้เลย (พิมพ์ยี่ห้อใหม่ในฟอร์มได้ ระบบเพิ่มให้เอง)</small>
-        </div>
-      )}
+      {rows.length === 0 && <p className="adm-sub">ยังไม่มีสินค้า กดปุ่ม "+ เพิ่มสินค้า" ได้เลย (พิมพ์ยี่ห้อใหม่ในฟอร์มได้ ระบบเพิ่มให้เอง)</p>}
 
       {rows.length > 0 && (
         <div className="adm-stats">
@@ -111,13 +105,9 @@ export default async function AdminHome() {
       )}
 
       {rows.length > 0 && (
-      <div className="adm-panel"><h2>
-        <svg className={`adm-h2-ic ${low.length > 0 ? "warn" : "ok"}`} viewBox="0 0 24 24" aria-hidden="true">
-          {low.length > 0 ? <path d="M12 3L2 20h20L12 3zM12 10v4M12 17h.01" /> : <path d="M5 13l4 4L19 7" />}
-        </svg>
-        สินค้าใกล้หมด{low.length > 0 ? ` (${low.length})` : ""}</h2>
+      <div className="adm-panel"><h2>สินค้าใกล้หมด{low.length > 0 ? ` (${low.length})` : ""}</h2>
       {low.length === 0 ? (
-        <p className="adm-ok-txt">ตอนนี้สินค้ายังพอ ไม่มีของใกล้หมด</p>
+        <p className="adm-sub">ไม่มีสินค้าใกล้หมด</p>
       ) : (
         <div className="adm-list">
           {low.slice(0, 10).map((r) => (
@@ -129,7 +119,7 @@ export default async function AdminHome() {
               <span className="adm-row-tag off">เหลือ {r.stock_qty} {typeUnit(r.product_type)}</span>
             </Link>
           ))}
-          {low.length > 10 && <Link href="/admin/products" className="adm-sub">ดูทั้งหมด ({low.length} รายการ) →</Link>}
+          {low.length > 10 && <Link href="/admin/products" className="adm-sub">ดูทั้งหมดที่สินค้าและสต็อก ({low.length} รายการ)</Link>}
         </div>
       )}
       </div>

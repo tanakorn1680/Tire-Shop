@@ -339,34 +339,9 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-hist-q.down{color:#d92d20}
 
 /* แจ้งเตือนยังไม่ได้ตั้งค่าร้าน (หน้าหลักแอดมิน) */
-.adm-warn-box{display:flex;align-items:center;gap:12px;width:100%;margin-bottom:16px;padding:12px 16px;border-radius:12px;background:#d92d20;color:#fff;transition:transform .12s ease,background-color .15s ease}
-.adm-warn-box:active{transform:scale(.98);background:#b42318}
-.adm-warn-box svg{width:28px;height:28px;flex:none;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.adm-warn-txt{flex:1;min-width:0;display:grid;gap:2px}
-.adm-warn-txt b{font-size:17px;line-height:1.3}
-.adm-warn-txt small{font-size:14px;opacity:.92}
-.adm-warn-box .adm-warn-go{width:22px;height:22px}
-
-/* ปุ่มลัดหน้าหลัก: ปุ่มใหญ่ 2 ช่อง มีสัญลักษณ์ + ข้อความ */
-.adm-quick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
-.adm .adm-quick .btn{min-height:56px;font-size:17px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
-.adm-quick .btn svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-@media(max-width:380px){.adm-quick{grid-template-columns:1fr}}
-
-/* หน้าหลัก: ยังไม่มีสินค้า / สินค้าใกล้หมด */
-.adm-empty{display:grid;justify-items:center;gap:6px;text-align:center;background:#fff;border:1px dashed var(--line);border-radius:14px;padding:28px 16px;margin-bottom:20px}
-.adm-empty svg{width:44px;height:44px;fill:none;stroke:var(--muted);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.adm-empty b{font-size:17px}
-.adm-empty small{font-size:14px;color:var(--muted)}
-.adm-panel h2{display:flex;align-items:center;gap:8px}
-.adm-h2-ic{width:22px;height:22px;flex:none;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.adm-h2-ic.warn{stroke:#d92d20}
-.adm-h2-ic.ok{stroke:var(--c-green)}
-.adm-ok-txt{font-size:15px;color:#1a7f3c;font-weight:600}
-.adm-panel .adm-row-main b{font-size:15px}
-.adm-panel .adm-row-main small{font-size:13px}
-.adm-panel .adm-row-tag{font-size:13px;padding:5px 12px}
-.adm-panel > a.adm-sub{display:block;margin:12px 0 0;font-size:14px;font-weight:600;color:var(--blue)}
+.adm-warn-box{display:inline-flex;align-items:center;gap:10px;height:48px;padding:0 16px;margin-bottom:16px;font-size:15px;font-weight:700;border-radius:12px;background:#d92d20;color:#fff;transition:transform .12s ease,background-color .15s ease}
+.adm-warn-box:active{transform:scale(.94);background:#b42318}
+.adm-warn-box svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ปุ่มทรงเดียวกับ btn-dark แต่สีขาว (เช่น ปุ่มเพิ่มบริการ) */
 .adm .btn-dark.btn-white{background:#fff;color:#1a1a1a;border-color:var(--line)}
