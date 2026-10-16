@@ -68,6 +68,9 @@ export default function AdminShell({
     router.refresh();
   }
 
+  // ย้อนกลับหน้าก่อนหน้า (ถ้าเปิดหน้านี้ตรงๆ ไม่มีประวัติ ให้ไปหน้าหลักแอดมิน)
+  const goBack = () => (window.history.length > 1 ? router.back() : router.push("/admin"));
+
   const isOn = (href: string) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
   const name = storeName?.trim() || "จัดการร้าน";
   const roleLabel = role === "owner" ? "เจ้าของร้าน" : "พนักงาน";
@@ -101,7 +104,10 @@ export default function AdminShell({
 
       <div className="adm-body">
         <header className="adm-top">
-          <span className="adm-brand">{name}</span>
+          <div className="adm-top-l">
+            <button type="button" className="adm-back" onClick={goBack}>‹ ย้อนกลับ</button>
+            <span className="adm-brand">{name}</span>
+          </div>
           <button type="button" className="adm-menu-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
             {open ? "ปิด" : "เมนู"}
           </button>
@@ -116,6 +122,7 @@ export default function AdminShell({
           </div>
         )}
         <div className="adm-tb">
+          <button type="button" className="adm-back adm-back-d" onClick={goBack}>‹ ย้อนกลับ</button>
           {/* หน้าสินค้ามีช่องค้นหาของตัวเองอยู่แล้ว ไม่แสดงซ้ำ */}
           {!pathname.startsWith("/admin/products") && <form onSubmit={(e) => { e.preventDefault(); router.push(`/admin/products${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`); }}>
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาสินค้า / ยี่ห้อ / รุ่น / ขนาด ..." />

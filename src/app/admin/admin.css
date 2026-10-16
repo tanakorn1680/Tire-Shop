@@ -16,6 +16,7 @@ body:has(.adm, .adm-auth) > .ftr{display:none}
 .adm-signout{background:none;border:1px solid #444a56;color:#d4d7de;border-radius:10px;min-height:44px;font:inherit;cursor:pointer}
 .adm-signout:hover{border-color:#8b92a0;color:#fff}
 .adm-top{display:none}
+.adm-back{flex:none;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#374151;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
 .adm-tb{display:flex;align-items:center;gap:14px;padding:14px 24px;background:#fff;border-bottom:1px solid var(--line)}
 .adm-tb form{flex:1;max-width:560px}
 .adm-tb input{width:100%;min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:16px;background:#f8f9fb}
@@ -28,7 +29,10 @@ body:has(.adm, .adm-auth) > .ftr{display:none}
   .adm-date{display:none}
   .adm-tb:not(:has(form)){display:none}
   .adm-top{display:flex;position:sticky;top:0;z-index:20;height:56px;align-items:center;justify-content:space-between;padding:0 12px;background:var(--navy);color:#fff}
-  .adm-top .adm-brand{padding:0}
+  .adm-top .adm-brand{padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .adm-top-l{display:flex;align-items:center;gap:10px;min-width:0}
+  .adm-top .adm-back{padding:0 12px;border-color:#444a56;background:none;color:#fff}
+  .adm-back-d{display:none}
   .adm-menu-btn{min-height:44px;padding:0 20px;border-radius:10px;border:1px solid #444a56;background:none;color:#fff;font:inherit;font-weight:700;cursor:pointer}
   .adm-drawer{position:fixed;top:56px;left:0;right:0;bottom:0;z-index:30;background:var(--navy);overflow-y:auto;padding:8px 12px 24px;display:flex;flex-direction:column}
   .adm-main{padding:18px 12px 50px}
