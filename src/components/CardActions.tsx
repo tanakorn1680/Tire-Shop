@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useCart } from "./cart/CartProvider";
 import type { OrderItem } from "@/lib/order";
 
-// ปุ่มในการ์ดสินค้า: สั่งซื้อ (เปิดแชทพร้อมข้อความ ลูกค้ากดส่งเอง) และใส่ตะกร้า
+// ปุ่มในการ์ดสินค้า: สั่งซื้อ (เปิดแชทพร้อมข้อความ ลูกค้ากดส่งเอง) และเพิ่มใส่รถเข็น
 export default function CardActions({ item, href }: { item: Omit<OrderItem, "qty">; href: string }) {
   const cart = useCart();
   const [state, setState] = useState<"idle" | "added" | "full">("idle");
@@ -19,7 +19,7 @@ export default function CardActions({ item, href }: { item: Omit<OrderItem, "qty
           window.setTimeout(() => setState("idle"), 1500);
         }}
       >
-        {state === "added" ? "ใส่ตะกร้าแล้ว" : state === "full" ? "ตะกร้าเต็ม (สูงสุด 10 รายการ)" : "ใส่ตะกร้า"}
+        {state === "added" ? "เพิ่มแล้ว" : state === "full" ? "รถเข็นเต็ม (สูงสุด 10 รายการ)" : "เพิ่มใส่รถเข็น"}
       </button>
     </div>
   );

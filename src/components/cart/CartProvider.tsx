@@ -89,13 +89,13 @@ function CartPanel() {
   const close = () => setOpen(false);
   return (
     <div className="cart-back" onClick={close}>
-      <aside className="cart" role="dialog" aria-modal="true" aria-label="ตะกร้าสินค้า" onClick={(e) => e.stopPropagation()}>
+      <aside className="cart" role="dialog" aria-modal="true" aria-label="รถเข็นสินค้า" onClick={(e) => e.stopPropagation()}>
         <div className="cart-hd">
-          <b>ตะกร้าสินค้า</b>
+          <b>รถเข็นสินค้า</b>
           <button type="button" className="cart-x" onClick={close}>ปิด</button>
         </div>
         {items.length === 0 ? (
-          <p className="note" style={{ margin: 16 }}>ยังไม่มีสินค้าในตะกร้า</p>
+          <p className="note" style={{ margin: 16 }}>ยังไม่มีสินค้าในรถเข็น</p>
         ) : (
           <>
             <div className="cart-list">
@@ -117,7 +117,7 @@ function CartPanel() {
             <div className="cart-ft">
               <div className="cart-sum"><span>ยอดรวม</span><b>฿{total.toLocaleString("th-TH")}</b></div>
               <a className="btn btn-brand" href={orderUrl(messenger, cartOrderText(items))} target="_blank" rel="noopener noreferrer">สั่งซื้อ</a>
-              <button type="button" className="cart-clear" onClick={clear}>ล้างตะกร้า</button>
+              <button type="button" className="cart-clear" onClick={clear}>ล้างรถเข็น</button>
             </div>
           </>
         )}
