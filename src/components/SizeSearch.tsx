@@ -11,7 +11,7 @@ function Sel({ name, label, opts, val, fmt }: {
   return (
     <label>{label}
       <select name={name} defaultValue={val ?? ""}>
-        <option value="">ทั้งหมด</option>
+        <option value="">เลือก</option>
         {opts.map((o) => <option key={o} value={o}>{fmt ? fmt(o) : o}</option>)}
       </select>
     </label>
@@ -40,13 +40,13 @@ export default function SizeSearch({ w, a, r, cars = [] }: { w?: string; a?: str
 
   const sizeForm = (
     <>
-      <form action="/products">
-        <Sel name="w" label="ความกว้างหน้ายาง (A)" opts={site.sizes.width} val={w} fmt={(o) => `${o} มม.`} />
-        <Sel name="a" label="ความสูงแก้มยาง (B)" opts={site.sizes.aspect} val={a} fmt={(o) => `${o}%`} />
-        <Sel name="r" label="เส้นผ่าศูนย์กลาง (C)" opts={site.sizes.rim} val={r} fmt={(o) => `R${o}`} />
+      <form className="sz" action="/products">
+        <Sel name="w" label="กว้าง (มม.)" opts={site.sizes.width} val={w} />
+        <Sel name="a" label="แก้มยาง (%)" opts={site.sizes.aspect} val={a} />
+        <Sel name="r" label="ขอบ (นิ้ว)" opts={site.sizes.rim} val={r} />
         <button className="btn btn-dark" type="submit">ค้นหา</button>
       </form>
-      <p className="s-hint">ดูตัวเลขได้ที่ข้างแก้มยาง เช่น 205/55R16 คือ A=205 B=55 C=16</p>
+      <p className="s-hint">ดูเลขได้ที่ข้างแก้มยาง เช่น 205/55R16 = กว้าง 205 · แก้ม 55 · ขอบ 16</p>
     </>
   );
 
@@ -62,49 +62,47 @@ export default function SizeSearch({ w, a, r, cars = [] }: { w?: string; a?: str
   return (
     <div className="search">
       <div className="stabs" role="tablist">
-        <button type="button" role="tab" aria-selected={mode === "size"} className={mode === "size" ? "on" : ""} onClick={() => setMode("size")}>ค้นหาจากขนาดยาง</button>
-        <button type="button" role="tab" aria-selected={mode === "car"} className={mode === "car" ? "on" : ""} onClick={() => setMode("car")}>ค้นหาจากรุ่นรถ</button>
+        <button type="button" role="tab" aria-selected={mode === "size"} className={mode === "size" ? "on" : ""} onClick={() => setMode("size")}>ขนาดยาง</button>
+        <button type="button" role="tab" aria-selected={mode === "car"} className={mode === "car" ? "on" : ""} onClick={() => setMode("car")}>รุ่นรถ</button>
       </div>
       {mode === "size" ? sizeForm : (
         <>
           <form className="car" onSubmit={(e) => e.preventDefault()}>
-            <label>ยี่ห้อรถ
+            <label>ยี่ห้อ
               <select value={brand} onChange={(e) => { setBrand(e.target.value); setModel(""); setVariant(null); }}>
                 <option value="">เลือกยี่ห้อ</option>
                 {brands.map((b) => <option key={b} value={b}>{b}</option>)}
               </select>
             </label>
-            <label>รุ่นรถ
+            <label>รุ่น
               <select value={model} disabled={!brand} onChange={(e) => { setModel(e.target.value); setVariant(null); }}>
                 <option value="">เลือกรุ่น</option>
                 {models.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </label>
-            <label>ปีรถ / รุ่นย่อย
-              <select
-                value={variants.length === 1 ? variants[0].variant : variant ?? ""}
-                disabled={!model}
-                onChange={(e) => setVariant(e.target.value)}
-              >
-                {variants.length !== 1 && <option value="" disabled>เลือกปี / รุ่นย่อย</option>}
-                {variants.map((c) => <option key={c.variant} value={c.variant}>{c.variant || "ทุกปี / ทุกรุ่นย่อย"}</option>)}
-              </select>
-            </label>
+            {variants.length > 1 && (
+              <label>ปี / รุ่นย่อย
+                <select value={variant ?? ""} onChange={(e) => setVariant(e.target.value)}>
+                  <option value="" disabled>เลือกปี / รุ่นย่อย</option>
+                  {variants.map((c) => <option key={c.variant} value={c.variant}>{c.variant || "ทุกปี / ทุกรุ่นย่อย"}</option>)}
+                </select>
+              </label>
+            )}
           </form>
           {picked ? (
             <div className="s-res">
-              <b>ขนาดยางที่ใช้ได้ (กดเพื่อดูสินค้า)</b>
+              <b>ขนาดยางที่ใช้ได้ — กดเพื่อดูสินค้า</b>
               <div className="s-chips">
                 {picked.sizes.map((s) => {
                   const h = sizeHref(s);
                   return h ? <Link key={s} href={h}>{s}</Link> : <span key={s}>{s}</span>;
                 })}
               </div>
+              <p className="s-hint">ขนาดตามข้อมูลของร้าน ควรตรวจสอบกับทางร้านอีกครั้งก่อนสั่งซื้อ</p>
             </div>
           ) : (
-            <p className="s-hint">เลือกยี่ห้อ รุ่น และปี เพื่อดูขนาดยางที่ใช้ได้</p>
+            <p className="s-hint">เลือกยี่ห้อและรุ่น เพื่อดูขนาดยางที่ใช้ได้</p>
           )}
-          <p className="s-hint">ขนาดตามข้อมูลของร้าน ควรตรวจสอบกับทางร้านอีกครั้งก่อนสั่งซื้อ</p>
         </>
       )}
     </div>
