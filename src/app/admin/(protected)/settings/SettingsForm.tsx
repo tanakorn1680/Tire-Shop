@@ -4,12 +4,31 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { normalizeUrl } from "@/lib/links";
+import { imageUrl } from "@/lib/supabase";
 
 type Settings = {
   store_name?: string | null; tagline?: string | null; phone?: string | null;
   hours?: string | null; address?: string | null; line_url?: string | null;
   facebook_url?: string | null; messenger_url?: string | null;
+  store_image_path?: string | null;
 };
+
+// ย่อรูปจากกล้องมือถือให้เล็กลงก่อนอัปโหลด (ไม่เกิน 1600px) กันไฟล์ใหญ่เกิน 5 MB
+async function shrink(file: File): Promise<Blob> {
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && file.size <= 1_500_000) return file;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * scale);
+    canvas.height = Math.round(bmp.height * scale);
+    canvas.getContext("2d")?.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.85));
+    return blob ?? file;
+  } catch {
+    return file;
+  }
+}
 
 // อ่านลิงก์จากรูป QR Code (ทำงานในเครื่อง ไม่ส่งรูปไปที่ไหน ไม่มีค่าใช้จ่าย)
 async function readQr(file: File): Promise<string | null> {
@@ -71,7 +90,7 @@ function LinkField({ id, label, value, onChange, placeholder, hint, required }: 
   );
 }
 
-export default function SettingsForm({ initial, needMigration = false }: { initial: Settings; needMigration?: boolean }) {
+export default function SettingsForm({ initial, needMigration = false, photoReady = true }: { initial: Settings; needMigration?: boolean; photoReady?: boolean }) {
   const router = useRouter();
   const [form, setForm] = useState({
     store_name: initial.store_name ?? "",
@@ -85,6 +104,22 @@ export default function SettingsForm({ initial, needMigration = false }: { initi
   });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [photo, setPhoto] = useState<string | null>(initial.store_image_path ?? null);
+  const [uploading, setUploading] = useState(false);
+
+  async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setMsg(null);
+    setUploading(true);
+    const blob = await shrink(file);
+    const path = `store/${crypto.randomUUID()}.jpg`;
+    const { error } = await sb().storage.from("product-images").upload(path, blob, { cacheControl: "3600", contentType: blob.type || "image/jpeg" });
+    setUploading(false);
+    if (error) return setMsg({ ok: false, text: "อัปโหลดรูปไม่สำเร็จ ลองรูปอื่น (รองรับ JPG, PNG, WEBP)" });
+    setPhoto(path);
+  }
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -112,7 +147,7 @@ export default function SettingsForm({ initial, needMigration = false }: { initi
     const payload = Object.fromEntries(
       Object.entries({ ...form, messenger_url: messenger, facebook_url: facebook ?? "" }).map(([k, v]) => [k, v.trim() === "" ? null : v.trim()])
     );
-    const { error } = await sb().from("store_settings").update(payload).eq("id", 1);
+    const { error } = await sb().from("store_settings").update(photoReady ? { ...payload, store_image_path: photo } : payload).eq("id", 1);
     setSaving(false);
     if (error) {
       setMsg({ ok: false, text: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง" });
@@ -164,6 +199,18 @@ export default function SettingsForm({ initial, needMigration = false }: { initi
         placeholder="https://m.me/ชื่อเพจ"
         hint="ลูกค้ากดสั่งซื้อในหน้าเว็บ จะเปิดแชทนี้พร้อมข้อความรายการสินค้า"
       />
+      <div className="adm-f">
+        <label htmlFor="store-photo">รูปร้านค้า</label>
+        {photo && imageUrl(photo) && <img src={imageUrl(photo)!} alt="" className="adm-thumb" style={{ width: 200, height: 120, objectFit: "cover" }} />}
+        <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <label className="btn btn-ghost btn-sm" style={{ cursor: uploading || !photoReady ? "default" : "pointer" }}>
+            {uploading ? "กำลังอัปโหลด..." : photo ? "เปลี่ยนรูป" : "เลือกรูปร้าน"}
+            <input id="store-photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={onPickPhoto} disabled={uploading || !photoReady} style={{ display: "none" }} />
+          </label>
+          {photo && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPhoto(null)} disabled={uploading}>ลบรูป</button>}
+        </div>
+        <span className="adm-hint">{photoReady ? "จะแสดงด้านล่างหน้าแรกของเว็บ กดบันทึกด้านล่างเพื่อใช้รูปนี้" : "ต้องรัน migration 0008_store_photo.sql ใน Supabase SQL Editor ก่อน ถึงจะอัปโหลดรูปร้านได้"}</span>
+      </div>
       {needMigration && <p className="adm-msg err">ต้องรัน migration 0006_social_links.sql ใน Supabase SQL Editor ก่อน ช่อง Facebook/Messenger ถึงจะบันทึกได้</p>}
       {msg && <p className={`adm-msg ${msg.ok ? "ok" : "err"}`}>{msg.text}</p>}
       <div className="adm-actions">

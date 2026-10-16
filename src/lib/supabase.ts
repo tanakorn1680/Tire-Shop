@@ -11,6 +11,7 @@ export type Settings = {
   store_name: string | null; tagline: string | null; phone: string | null;
   hours: string | null; address: string | null; line_url: string | null;
   facebook_url: string | null; messenger_url: string | null;
+  store_image_path: string | null;
 };
 export type Named = { id: string; name: string; description?: string | null };
 
@@ -38,13 +39,16 @@ export const getSite = cache(async () => {
       const full = await sb.from("store_settings").select(`${base},facebook_url,messenger_url`).eq("id", 1).maybeSingle();
       return full.error ? sb.from("store_settings").select(base).eq("id", 1).maybeSingle() : full;
     };
-    const [s, c, v, u] = await Promise.all([
+    // รูปร้าน: ถ้ายังไม่ได้รัน migration 0008 จะ error แล้วข้ามไป (ไม่กระทบส่วนอื่น)
+    const loadPhoto = () => sb.from("store_settings").select("store_image_path").eq("id", 1).maybeSingle();
+    const [s, c, v, u, ph] = await Promise.all([
       loadSettings(),
       sb.from("categories").select("id,name").order("sort_order").order("name"),
       sb.from("services").select("id,name,description").eq("is_active", true).order("sort_order"),
       sb.from("products_public").select("category_id"),
+      loadPhoto(),
     ]);
-    settings = (s.data ?? {}) as Partial<Settings>;
+    settings = { ...((s.data ?? {}) as Partial<Settings>), store_image_path: ph.error ? null : ph.data?.store_image_path ?? null };
     // แสดงเฉพาะประเภทที่มีสินค้าอยู่จริง ถ้ายังไม่มีเลยจะเหลือแค่ "ทั้งหมด"
     const used = new Set(((u.data ?? []) as { category_id: string | null }[]).map((p) => p.category_id));
     categories = (c.data ?? []).filter((x) => used.has(x.id));

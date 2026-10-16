@@ -9,6 +9,10 @@ export default async function SettingsPage() {
   const full = await supabase.from("store_settings").select(`${base},facebook_url,messenger_url`).eq("id", 1).maybeSingle();
   const { data } = full.error ? await supabase.from("store_settings").select(base).eq("id", 1).maybeSingle() : full;
   const needMigration = !!full.error;
+  // รูปร้าน: ถ้ายังไม่ได้รัน migration 0008 จะอัปโหลดรูปไม่ได้
+  const photo = await supabase.from("store_settings").select("store_image_path").eq("id", 1).maybeSingle();
+  const photoReady = !photo.error;
+  const initial = { ...(data ?? {}), store_image_path: photo.data?.store_image_path ?? null };
 
   return (
     <>
@@ -19,7 +23,7 @@ export default async function SettingsPage() {
         </div>
       </div>
       {role === "owner" ? (
-        <SettingsForm initial={data ?? {}} needMigration={needMigration} />
+        <SettingsForm initial={initial} needMigration={needMigration} photoReady={photoReady} />
       ) : (
         <div className="adm-card"><p>เฉพาะเจ้าของร้านเท่านั้นที่แก้ไขหน้านี้ได้</p></div>
       )}

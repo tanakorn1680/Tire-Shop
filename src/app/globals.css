@@ -138,3 +138,6 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 .nav-m summary::-webkit-details-marker{display:none}
 .nav-m summary svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 .nav-m div{top:48px}
+
+/* รูปร้านค้า (ตั้งค่าร้าน) ด้านล่างหน้าแรก */
+.shop-img{display:block;width:100%;aspect-ratio:16/9;max-height:420px;object-fit:cover;border-radius:12px;background:#f0f0f3}
