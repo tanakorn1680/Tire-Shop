@@ -4,6 +4,8 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { useConfirm } from "@/components/admin/Confirm";
+import { useStockNote } from "@/components/admin/StockNote";
+import { HISTORY_FAIL_MSG, historyName, logHistory } from "@/lib/stock-history";
 import { useBackOverride } from "@/components/admin/AdminShell";
 import { imageUrl } from "@/lib/supabase";
 import {
@@ -26,6 +28,7 @@ export default function ProductsManager({
 }) {
   const router = useRouter();
   const ask = useConfirm();
+  const { askNote, noteDialog } = useStockNote();
   const [items, setItems] = useState(initial);
   const [editing, setEditing] = useState<AdminProduct | "new" | null>(initialAdd ? "new" : null); // "new" = เพิ่มใหม่
   const [tabRaw, setTab] = useState<string>(initialCat); // "all" หรือ id ของประเภทสินค้า
@@ -118,12 +121,11 @@ export default function ProductsManager({
     const next = qty[p.id];
     if (next === undefined || next === p.stock_qty) return;
     const unit = typeUnit(p.product_type);
-    const ok = await ask({
-      title: "ยืนยันการบันทึกจำนวน",
+    const note = await askNote({
+      action: next > p.stock_qty ? "increase" : "decrease",
       message: `เปลี่ยนจำนวนคงเหลือของ ${p.brand_name} ${p.name}${p.model ? ` ${p.model}` : ""} จาก ${p.stock_qty} เป็น ${next} ${unit} ใช่หรือไม่?`,
-      confirmText: "บันทึก",
     });
-    if (!ok) return;
+    if (!note) return;
     setBusy(true);
     setErr(null);
     const { data, error } = await sb().from("products").update({ stock_qty: next }).eq("id", p.id).select("stock_qty,updated_at").single();
@@ -136,6 +138,13 @@ export default function ProductsManager({
       return n;
     });
     router.refresh();
+    if (note.record) {
+      const logged = await logHistory({
+        action: next > p.stock_qty ? "increase" : "decrease", product_id: p.id, product_name: historyName(p.brand_name, p.name, p.model),
+        qty_before: p.stock_qty, qty_after: next, reason: note.reason, occurred_at: note.at,
+      });
+      if (!logged) setErr(HISTORY_FAIL_MSG);
+    }
   }
 
   // บันทึกลำดับทั้งหมดในครั้งเดียว (ids ว่าง = ล้างลำดับ กลับเป็นจัดอัตโนมัติ)
@@ -187,15 +196,29 @@ export default function ProductsManager({
     if (d?.over) void moveTo(d.id, d.over);
   }
 
-  async function remove(id: string) {
-    if (!(await ask({ message: "ลบสินค้านี้? ไม่สามารถกู้คืนได้", danger: true }))) return;
+  async function remove(p: AdminProduct) {
+    const note = await askNote({
+      action: "delete",
+      message: `ลบ ${historyName(p.brand_name, p.name, p.model)} ? ไม่สามารถกู้คืนได้`,
+      confirmText: "ลบ",
+      danger: true,
+    });
+    if (!note) return;
     setBusy(true);
     setErr(null);
-    const { error } = await sb().from("products").delete().eq("id", id);
+    const { error } = await sb().from("products").delete().eq("id", p.id);
     setBusy(false);
     if (error) { setErr("ลบไม่สำเร็จ"); return; }
-    setItems((xs) => xs.filter((x) => x.id !== id));
+    setItems((xs) => xs.filter((x) => x.id !== p.id));
     router.refresh();
+    if (note.record) {
+      // สินค้าถูกลบแล้ว จึงไม่ผูก product_id (ประวัติเก็บชื่อสินค้าไว้เอง)
+      const logged = await logHistory({
+        action: "delete", product_id: null, product_name: historyName(p.brand_name, p.name, p.model),
+        qty_before: p.stock_qty, qty_after: 0, reason: note.reason, occurred_at: note.at,
+      });
+      if (!logged) setErr(HISTORY_FAIL_MSG);
+    }
   }
 
   if (editing) {
@@ -221,6 +244,7 @@ export default function ProductsManager({
 
   return (
     <>
+      {noteDialog}
       {items.length > 0 && (
         <div className="adm-tabs" role="tablist">
           <button type="button" className={`adm-tab ${tab === "all" ? "on" : ""}`} onClick={() => { setTab("all"); setLimit(PAGE); }}>
@@ -325,7 +349,7 @@ export default function ProductsManager({
                       {p.is_active ? "ซ่อน" : "แสดง"}
                     </button>
                     {canDelete && (
-                      <button className="btn btn-danger btn-sm" type="button" onClick={() => remove(p.id)} disabled={busy}>ลบ</button>
+                      <button className="btn btn-danger btn-sm" type="button" onClick={() => remove(p)} disabled={busy}>ลบ</button>
                     )}
                   </div>
                 </div>

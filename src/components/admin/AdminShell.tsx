@@ -11,6 +11,7 @@ const ICONS: Record<string, string[]> = {
   sliders: ["M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"],
   tag: ["M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z", "M7 7h.01"],
   grid: ["M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"],
+  clock: ["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z", "M12 7v5l3 2"],
   wrench: ["M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"],
 };
 const Icon = ({ n }: { n: string }) => (
@@ -43,6 +44,7 @@ const NAV: { group: string | null; items: { href: string; label: string; icon: s
     items: [
       { href: "/admin", label: "หน้าหลัก", icon: "home" },
       { href: "/admin/products", label: "สินค้าและสต็อก", icon: "box" },
+      { href: "/admin/history", label: "ประวัติสต็อก", icon: "clock" },
     ],
   },
   {

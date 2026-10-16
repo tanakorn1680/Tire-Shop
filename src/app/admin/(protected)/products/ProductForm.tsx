@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { useConfirm } from "@/components/admin/Confirm";
+import { useStockNote } from "@/components/admin/StockNote";
+import { HISTORY_FAIL_MSG, historyName, localInputToIso, logHistory, nowLocalInput } from "@/lib/stock-history";
 import { imageUrl } from "@/lib/supabase";
 import { shrinkImage } from "@/lib/image";
 import {
@@ -95,6 +97,11 @@ export default function ProductForm({
   }, [product?.id]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { askNote, noteDialog } = useStockNote();
+  // ประวัติตอนเพิ่มสินค้าใหม่: วัน-เวลา (พิมพ์แก้ได้) และแหล่งที่มา; เลือกไม่บันทึกได้ (จะถามยืนยันอีกครั้งตอนกดบันทึก)
+  const [addedAt, setAddedAt] = useState(nowLocalInput);
+  const [source, setSource] = useState("");
+  const [skipHist, setSkipHist] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   // ส่วน "รายละเอียดเพิ่มเติม" พับไว้ตอนเพิ่มสินค้าใหม่ (แก้ไขสินค้าเดิมเปิดไว้) และเปิดเองถ้าผิดพลาดที่ช่องในส่วนนั้น
   const [more, setMore] = useState(!!product);
@@ -316,6 +323,32 @@ export default function ProductForm({
       is_active: form.is_active,
     };
 
+    // ประวัติ: เพิ่มสินค้าใหม่ = ใช้ช่องวัน-เวลา/แหล่งที่มาในฟอร์ม, แก้จำนวนของสินค้าเดิม = ถามเหตุผลก่อนบันทึก
+    let hist: { at: string; reason: string } | null = null;
+    let histAction: "add" | "increase" | "decrease" = "add";
+    if (!product) {
+      if (skipHist) {
+        const ok = await ask({
+          title: "ไม่บันทึกลงประวัติ?",
+          message: "แน่ใจหรือไม่ว่าไม่ต้องการบันทึกการเพิ่มสินค้านี้ลงประวัติ? รายการนี้จะไม่ปรากฏในประวัติสต็อก",
+          confirmText: "แน่ใจ ไม่บันทึก",
+        });
+        if (!ok) return;
+      } else {
+        const iso = localInputToIso(addedAt);
+        if (!iso) return setErr("วันที่และเวลาที่เพิ่มไม่ถูกต้อง");
+        hist = { at: iso, reason: source.trim() };
+      }
+    } else if (stock_qty !== product.stock_qty) {
+      histAction = stock_qty > product.stock_qty ? "increase" : "decrease";
+      const note = await askNote({
+        action: stock_qty > product.stock_qty ? "increase" : "decrease",
+        message: `เปลี่ยนจำนวนคงเหลือจาก ${product.stock_qty} เป็น ${stock_qty} ${unit} ใช่หรือไม่?`,
+      });
+      if (!note) return;
+      if (note.record) hist = { at: note.at, reason: note.reason };
+    }
+
     setSaving(true);
 
     // ประเภท: พิมพ์ชื่อใหม่ไว้ ระบบเพิ่มให้อัตโนมัติ (เหมือนยี่ห้อ)
@@ -355,6 +388,13 @@ export default function ProductForm({
     }
     // บันทึกรูปทั้งหมด (ถ้าตาราง product_images พร้อม) และลบไฟล์รูปที่ถูกเอาออกจากที่เก็บรูป
     const savedId = (data as unknown as { id: string }).id;
+    if (hist) {
+      const logged = await logHistory({
+        action: histAction, product_id: savedId, product_name: historyName(form.brand.trim().replace(/\s+/g, " "), payload.name, payload.model),
+        qty_before: product ? product.stock_qty : 0, qty_after: stock_qty, reason: hist.reason || null, occurred_at: hist.at,
+      });
+      if (!logged) await ask({ title: "บันทึกประวัติไม่สำเร็จ", message: HISTORY_FAIL_MSG, confirmText: "ตกลง" });
+    }
     if (multiReady) {
       await sb().from("product_images").delete().eq("product_id", savedId);
       if (images.length) await sb().from("product_images").insert(images.map((path, i) => ({ product_id: savedId, path, sort_order: i })));
@@ -415,6 +455,7 @@ export default function ProductForm({
   );
 
   return (
+    <>
     <form className="adm-card adm-form" onSubmit={onSubmit}>
       <h1 style={{ fontSize: 17 }}>{product ? "แก้ไข" : "เพิ่ม"}{title}</h1>
 
@@ -601,6 +642,26 @@ export default function ProductForm({
         </div>
       </fieldset>
 
+      {!product && (
+        <fieldset className="adm-fs">
+          <legend>ประวัติการเพิ่มสินค้า</legend>
+          {!skipHist && (
+            <div className="adm-f-row">
+              <label className="adm-f">วันที่และเวลาที่เพิ่ม
+                <input type="datetime-local" value={addedAt} onChange={(e) => setAddedAt(e.target.value)} />
+              </label>
+              <label className="adm-f">ได้มาจากไหน
+                <input value={source} onChange={(e) => setSource(e.target.value)} placeholder="เช่น ซื้อจากร้าน ABC, รับจากลูกค้า" />
+              </label>
+            </div>
+          )}
+          <label className="adm-chk">
+            <input type="checkbox" checked={skipHist} onChange={(e) => setSkipHist(e.target.checked)} />
+            ไม่บันทึกลงประวัติ
+          </label>
+        </fieldset>
+      )}
+
       {isUsed && imageBlock}
 
       <details className="adm-opt" open={more} onToggle={(e) => setMore(e.currentTarget.open)}>
@@ -691,5 +752,7 @@ export default function ProductForm({
         </button>
       </div>
     </form>
+    {noteDialog}
+    </>
   );
 }

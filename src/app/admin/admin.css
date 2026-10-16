@@ -324,3 +324,16 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-tab,.adm-pick-c,.adm-gear-btn,.adm-combo-arrow,.adm-pop-del,.adm-img-x,.adm-img-set,.adm-pop-o,.adm-pop-new,.adm-pop-link,.adm-gear-pop a{transition:transform .12s ease,background-color .15s ease,color .15s ease,border-color .15s ease,filter .15s ease}
 .adm-tab:active,.adm-pick-c:active,.adm-gear-btn:active,.adm-combo-arrow:active,.adm-pop-del:active,.adm-img-x:active,.adm-img-set:active{transform:scale(.96)}
 .adm-pop-o:active,.adm-pop-new:active,.adm-pop-link:active,.adm-gear-pop a:active{background:#e3ebf6}
+
+/* ===== ประวัติสต็อก: หน้าต่างกรอกเหตุผล + หน้ารายการประวัติ ===== */
+.adm-dlg-note{max-height:calc(100dvh - 40px);overflow-y:auto}
+.adm-dlg-note .adm-f{margin-top:14px}
+.adm-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.adm-chip{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-size:14px;color:#374151;cursor:pointer;transition:transform .12s ease,background-color .15s ease}
+.adm-chip:active{transform:scale(.96);background:#e3ebf6}
+.adm-dlg-skip{display:block;margin:14px auto 0;min-height:44px;padding:0 12px;border:0;background:none;font:inherit;font-size:14px;color:#6b7280;text-decoration:underline;cursor:pointer}
+.adm-dlg-skip:active{color:#111827}
+.adm-hist .adm-row-main small{display:block}
+.adm-hist-q{font-weight:700;white-space:nowrap}
+.adm-hist-q.up{color:var(--c-green)}
+.adm-hist-q.down{color:#d92d20}
