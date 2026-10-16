@@ -141,3 +141,10 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 
 /* รูปร้านค้า (ตั้งค่าร้าน) ด้านล่างหน้าแรก */
 .shop-img{display:block;width:100%;aspect-ratio:16/9;max-height:420px;object-fit:cover;border-radius:12px;background:#f0f0f3}
+
+/* ปุ่มในการ์ดสินค้า: สั่งซื้อ + ปุ่มไอคอนรถเข็นสี่เหลี่ยมเล็ก */
+.card-act{grid-template-columns:1fr auto;gap:8px;align-items:stretch}
+.card-act .btn-cart{width:44px;min-height:40px;padding:0;margin-top:0;border:1px solid var(--line);border-radius:8px;background:#fff;color:#1a1a1a}
+.card-act .btn-cart svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.card-act .btn-cart.ok{color:#16a34a;border-color:#16a34a}
+.card-act .order-hint{grid-column:1/-1}

@@ -1,7 +1,8 @@
 /* ===== Admin shell ===== */
 /* root layout ครอบ Header/Footer ของหน้าลูกค้าไว้ทุกหน้า ซ่อนในหน้า /admin เพื่อไม่ให้มีเมนูซ้ำซ้อน */
 body:has(.adm, .adm-auth) > .hdr,
-body:has(.adm, .adm-auth) > .ftr{display:none}
+body:has(.adm, .adm-auth) > .ftr,
+body:has(.adm, .adm-auth) > .shop-sec{display:none}
 .adm{--navy:#16212e;--blue:#1570ef;--c-blue:#1580f7;--c-green:#26ae55;--c-purple:#775be7;--c-orange:#fb942a;min-height:100vh;background:#f4f6fa;display:flex}
 .adm-body{flex:1;min-width:0}
 .adm-side{width:230px;flex:none;background:var(--navy);color:#fff;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:16px 12px;overflow-y:auto}
