@@ -78,7 +78,7 @@ function LinkField({ id, label, value, onChange, placeholder, hint, required }: 
 
   return (
     <div className="adm-f">
-      <label htmlFor={id}>{label}{required ? " *" : ""}</label>
+      <label htmlFor={id}>{label}{required && <span style={{ color: "#b42318", marginLeft: 6 }}>(จำเป็น)</span>}</label>
       <input id={id} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} inputMode="url" autoComplete="off" />
       <div style={{ marginTop: 8 }}>
         <label className="btn btn-ghost btn-sm" style={{ cursor: busy ? "default" : "pointer" }}>
@@ -250,7 +250,7 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
         value={form.messenger_url}
         onChange={(v) => set("messenger_url", v)}
         placeholder="https://m.me/ชื่อเพจ"
-        hint="ลูกค้ากดสั่งซื้อในหน้าเว็บ จะเปิดแชทนี้พร้อมข้อความรายการสินค้า"
+        hint="ลูกค้ากดสั่งซื้อในหน้าเว็บ จะเปิดแชทนี้พร้อมข้อความรายการสินค้า ถ้ายังไม่ได้กรอก ปุ่มสั่งซื้อและรถเข็นจะไม่แสดงในหน้าเว็บลูกค้า"
       />
       <div className="adm-f">
         <label htmlFor="store-photo">รูปร้านค้า</label>
