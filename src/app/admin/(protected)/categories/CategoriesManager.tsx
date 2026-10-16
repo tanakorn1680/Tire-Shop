@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
+import { useConfirm } from "@/components/admin/Confirm";
 import { findBrand, guessKind, type ProductType } from "@/lib/product-meta";
 
 type Category = { id: string; name: string; sort_order: number; product_type: ProductType; used: number };
@@ -20,6 +21,7 @@ function parseNames(input: string): string[] {
 
 export default function CategoriesManager({ initial, canDelete }: { initial: Category[]; canDelete: boolean }) {
   const router = useRouter();
+  const ask = useConfirm();
   const [items, setItems] = useState(initial);
   const [text, setText] = useState("");
   const [editing, setEditing] = useState<Category | null>(null);
@@ -82,7 +84,7 @@ export default function CategoriesManager({ initial, canDelete }: { initial: Cat
 
   async function remove(c: Category) {
     if (c.used > 0) return;
-    if (!confirm(`ลบประเภท "${c.name}"?`)) return;
+    if (!(await ask({ message: `ลบประเภท "${c.name}"?`, danger: true }))) return;
     setBusy(true);
     setErr(null);
     setAdded([]);

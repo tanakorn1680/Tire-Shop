@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
+import { useConfirm } from "@/components/admin/Confirm";
 
 type Service = { id: string; name: string; description: string | null; sort_order: number; is_active: boolean };
 type Draft = { name: string; description: string };
 
 export default function ServicesManager({ initial, canDelete }: { initial: Service[]; canDelete: boolean }) {
   const router = useRouter();
+  const ask = useConfirm();
   const [items, setItems] = useState(initial);
   const [draft, setDraft] = useState<Draft>({ name: "", description: "" });
   const [editing, setEditing] = useState<(Service & Draft) | null>(null);
@@ -69,7 +71,7 @@ export default function ServicesManager({ initial, canDelete }: { initial: Servi
   }
 
   async function remove(id: string) {
-    if (!confirm("ลบบริการนี้?")) return;
+    if (!(await ask({ message: "ลบบริการนี้?", danger: true }))) return;
     setBusy(true);
     setErr(null);
     const { error } = await sb().from("services").delete().eq("id", id);

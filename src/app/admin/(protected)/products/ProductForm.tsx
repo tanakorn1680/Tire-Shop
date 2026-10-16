@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
+import { useConfirm } from "@/components/admin/Confirm";
 import { imageUrl } from "@/lib/supabase";
 import {
   PRODUCT_COLUMNS, dotText, findBrand, guessKind, parseDot, typeLabel, typeUnit,
@@ -66,6 +67,7 @@ export default function ProductForm({
   const typeChoices = product ? catList.filter((c) => c.product_type === product.product_type) : catList;
   const title = chosen?.name ?? (product ? typeLabel(product.product_type) : "สินค้า");
   const router = useRouter();
+  const ask = useConfirm();
   const isWheel = type === "wheel";
   const isUsed = type === "used_tire";
   const unit = typeUnit(type);
@@ -164,7 +166,7 @@ export default function ProductForm({
   }
 
   async function removeCategory(c: Category) {
-    if (popBusy || !confirm(`ลบประเภท "${c.name}"?`)) return;
+    if (popBusy || !(await ask({ message: `ลบประเภท "${c.name}"?`, danger: true }))) return;
     setPopBusy(true);
     setPopMsg(null);
     const { error } = await sb().from("categories").delete().eq("id", c.id);
@@ -192,7 +194,7 @@ export default function ProductForm({
   }
 
   async function removeBrand(b: Named) {
-    if (popBusy || !confirm(`ลบยี่ห้อ "${b.name}"?`)) return;
+    if (popBusy || !(await ask({ message: `ลบยี่ห้อ "${b.name}"?`, danger: true }))) return;
     setPopBusy(true);
     setPopMsg(null);
     const { error } = await sb().from("brands").delete().eq("id", b.id);

@@ -17,6 +17,7 @@ const Icon = ({ n }: { n: string }) => (
   <svg className="adm-ic" viewBox="0 0 24 24" aria-hidden="true">{ICONS[n].map((d, i) => <path key={i} d={d} />)}</svg>
 );
 import { sb } from "@/lib/supabase-browser";
+import { ConfirmProvider } from "./Confirm";
 
 // เมนูเรียงตามลำดับการใช้งานจริง เพิ่มเมนูใหม่ที่นี่เมื่อหน้านั้นพร้อมใช้งานแล้วเท่านั้น
 const NAV: { group: string | null; items: { href: string; label: string; icon: string }[] }[] = [
@@ -88,6 +89,7 @@ export default function AdminShell({
 
   return (
     <div className="adm">
+      <ConfirmProvider>
       <aside className="adm-side">
         <div className="adm-brand">{name}</div>
         {navList}
@@ -122,6 +124,7 @@ export default function AdminShell({
         </div>
         <main className="adm-main">{children}</main>
       </div>
+      </ConfirmProvider>
     </div>
   );
 }

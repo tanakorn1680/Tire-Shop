@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
+import { useConfirm } from "@/components/admin/Confirm";
 import { imageUrl } from "@/lib/supabase";
 import {
   baht, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
@@ -20,6 +21,7 @@ export default function ProductsManager({
   canDelete: boolean; initialQ: string; initialCat?: string; initialAdd?: boolean;
 }) {
   const router = useRouter();
+  const ask = useConfirm();
   const [items, setItems] = useState(initial);
   const [editing, setEditing] = useState<AdminProduct | "new" | null>(initialAdd ? "new" : null); // "new" = เพิ่มใหม่
   const [tabRaw, setTab] = useState<string>(initialCat); // "all" หรือ id ของประเภทสินค้า
@@ -66,7 +68,7 @@ export default function ProductsManager({
   }
 
   async function remove(id: string) {
-    if (!confirm("ลบสินค้านี้? ไม่สามารถกู้คืนได้")) return;
+    if (!(await ask({ message: "ลบสินค้านี้? ไม่สามารถกู้คืนได้", danger: true }))) return;
     setBusy(true);
     setErr(null);
     const { error } = await sb().from("products").delete().eq("id", id);

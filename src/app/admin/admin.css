@@ -234,3 +234,13 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-pop-del:hover{background:#fff4f2}
 .adm-pop-del:disabled{opacity:.5;cursor:default}
 .adm-pop-del svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ===== หน้าต่างยืนยัน (แทน confirm ของเบราว์เซอร์) ===== */
+.adm-dlg-back{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(22,33,46,.55)}
+.adm-dlg{width:100%;max-width:380px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 12px 32px rgba(22,33,46,.25)}
+.adm-dlg h2{font-size:18px;color:var(--navy)}
+.adm-dlg p{margin-top:8px;font-size:16px;line-height:1.5;color:#374151}
+.adm-dlg-acts{display:flex;gap:10px;margin-top:20px}
+.adm-dlg-acts .btn{flex:1;justify-content:center;min-height:48px}
+.adm .btn-danger-solid{background:#d92d20;border-color:#d92d20;color:#fff;border-radius:10px}
+.adm .btn-danger-solid:hover{background:#b42318}

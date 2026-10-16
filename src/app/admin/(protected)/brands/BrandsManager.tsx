@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
+import { useConfirm } from "@/components/admin/Confirm";
 import { findBrand } from "@/lib/product-meta";
 
 type Brand = { id: string; name: string; used: number };
@@ -20,6 +21,7 @@ function parseNames(input: string): string[] {
 
 export default function BrandsManager({ initial, canDelete }: { initial: Brand[]; canDelete: boolean }) {
   const router = useRouter();
+  const ask = useConfirm();
   const [items, setItems] = useState(initial);
   const [text, setText] = useState("");
   const [editing, setEditing] = useState<Brand | null>(null);
@@ -79,7 +81,7 @@ export default function BrandsManager({ initial, canDelete }: { initial: Brand[]
 
   async function remove(b: Brand) {
     if (b.used > 0) return;
-    if (!confirm(`ลบยี่ห้อ "${b.name}"?`)) return;
+    if (!(await ask({ message: `ลบยี่ห้อ "${b.name}"?`, danger: true }))) return;
     setBusy(true);
     setErr(null);
     setAdded([]);
