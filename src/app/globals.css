@@ -131,3 +131,9 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
   .grid .cat-h{display:block;grid-column:1/-1;margin:14px 0 0;padding-bottom:6px;border-bottom:2px solid var(--brand);font-size:15px;font-weight:700}
   .grid .cat-h:first-child{margin-top:0}
 }
+
+/* ปุ่มเมนูมือถือ = สัญลักษณ์ 3 ขีด */
+.nav-m summary{display:grid;place-items:center;width:44px;height:44px;-webkit-tap-highlight-color:transparent}
+.nav-m summary::-webkit-details-marker{display:none}
+.nav-m summary svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.nav-m div{top:48px}
