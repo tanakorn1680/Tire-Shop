@@ -10,7 +10,7 @@ type Settings = {
   store_name?: string | null; tagline?: string | null; phone?: string | null;
   hours?: string | null; address?: string | null; line_url?: string | null;
   facebook_url?: string | null; messenger_url?: string | null;
-  store_image_path?: string | null;
+  store_image_path?: string | null; map_url?: string | null;
 };
 
 // ย่อรูปจากกล้องมือถือให้เล็กลงก่อนอัปโหลด (ไม่เกิน 1600px) กันไฟล์ใหญ่เกิน 5 MB
@@ -90,7 +90,7 @@ function LinkField({ id, label, value, onChange, placeholder, hint, required }: 
   );
 }
 
-export default function SettingsForm({ initial, needMigration = false, photoReady = true }: { initial: Settings; needMigration?: boolean; photoReady?: boolean }) {
+export default function SettingsForm({ initial, needMigration = false, photoReady = true, mapReady = true }: { initial: Settings; needMigration?: boolean; photoReady?: boolean; mapReady?: boolean }) {
   const router = useRouter();
   const [form, setForm] = useState({
     store_name: initial.store_name ?? "",
@@ -101,6 +101,7 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
     line_url: initial.line_url ?? "",
     facebook_url: initial.facebook_url ?? "",
     messenger_url: initial.messenger_url ?? "",
+    map_url: initial.map_url ?? "",
   });
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
@@ -143,17 +144,28 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
       setMsg({ ok: false, text: "ลิงก์ Facebook ไม่ถูกต้อง" });
       return;
     }
+    // ลิงก์แผนที่ไม่บังคับ ถ้าไม่ใส่จะซ่อนสัญลักษณ์ตำแหน่งในหน้าเว็บ
+    const mapLink = form.map_url.trim() ? normalizeUrl(form.map_url) : "";
+    if (mapLink === null) {
+      setMsg({ ok: false, text: "ลิงก์แผนที่ไม่ถูกต้อง" });
+      return;
+    }
+    if (!mapReady && mapLink) {
+      setMsg({ ok: false, text: "ยังบันทึกลิงก์แผนที่ไม่ได้ ต้องรัน migration 0009_map_link.sql ใน Supabase SQL Editor ก่อน" });
+      return;
+    }
     setSaving(true);
     const payload = Object.fromEntries(
-      Object.entries({ ...form, messenger_url: messenger, facebook_url: facebook ?? "" }).map(([k, v]) => [k, v.trim() === "" ? null : v.trim()])
+      Object.entries({ ...form, messenger_url: messenger, facebook_url: facebook ?? "", map_url: mapLink ?? "" }).map(([k, v]) => [k, v.trim() === "" ? null : v.trim()])
     );
+    if (!mapReady) delete payload.map_url;
     const { error } = await sb().from("store_settings").update(photoReady ? { ...payload, store_image_path: photo } : payload).eq("id", 1);
     setSaving(false);
     if (error) {
       setMsg({ ok: false, text: "บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง" });
       return;
     }
-    setForm((f) => ({ ...f, messenger_url: messenger, facebook_url: facebook ?? "" }));
+    setForm((f) => ({ ...f, messenger_url: messenger, facebook_url: facebook ?? "", map_url: mapLink ?? "" }));
     setMsg({ ok: true, text: "บันทึกแล้ว" });
     router.refresh();
   }
@@ -178,6 +190,10 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
       </div>
       <label className="adm-f">ที่อยู่
         <textarea value={form.address} onChange={(e) => set("address", e.target.value)} placeholder="ที่อยู่ร้าน" />
+      </label>
+      <label className="adm-f">ลิงก์แผนที่ (Google Maps)
+        <input value={form.map_url} onChange={(e) => set("map_url", e.target.value)} placeholder="https://maps.app.goo.gl/..." inputMode="url" autoComplete="off" />
+        <span className="adm-hint">{mapReady ? "ไม่บังคับ ถ้าไม่ใส่ จะไม่แสดงสัญลักษณ์ตำแหน่งท้ายหน้าเว็บ" : "ต้องรัน migration 0009_map_link.sql ใน Supabase SQL Editor ก่อน ถึงจะบันทึกลิงก์แผนที่ได้"}</span>
       </label>
       <label className="adm-f">ลิงก์ LINE
         <input value={form.line_url} onChange={(e) => set("line_url", e.target.value)} placeholder="https://line.me/..." />

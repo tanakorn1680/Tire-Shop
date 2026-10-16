@@ -154,3 +154,10 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 .ftr-info{display:grid;gap:10px;align-content:center;min-width:0;overflow-wrap:anywhere}
 .ftr-info .btn{justify-self:start}
 @media(min-width:761px){.ftr-photo{grid-template-columns:minmax(0,420px) 1fr;gap:32px}.ftr-img{aspect-ratio:16/10}}
+
+/* ไอคอนกลมเล็กท้ายเว็บ: Facebook และแผนที่ (แสดงเฉพาะที่แอดมินใส่ลิงก์ไว้) */
+.ftr-soc{display:flex;gap:10px}
+.ftr-ic{display:grid;place-items:center;width:36px;height:36px;border-radius:50%}
+.ftr-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ftr-fb{background:#1877f2;color:#fff}
+.ftr-map{background:var(--brand);color:#1a1a1a}
