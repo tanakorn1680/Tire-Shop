@@ -337,3 +337,7 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-hist-q{font-weight:700;white-space:nowrap}
 .adm-hist-q.up{color:var(--c-green)}
 .adm-hist-q.down{color:#d92d20}
+
+/* แจ้งเตือนยังไม่ได้ตั้งค่าร้าน (หน้าหลักแอดมิน) */
+.adm-setup.warn{border-color:#f6c28b;background:#fffaf3}
+.adm-setup-ic{flex:none;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--c-orange);color:#fff;font-size:28px;font-weight:700;line-height:1}
