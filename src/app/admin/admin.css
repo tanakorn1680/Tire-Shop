@@ -342,3 +342,7 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-warn-box{display:grid;place-items:center;width:48px;height:48px;margin-bottom:16px;border-radius:12px;background:#d92d20;color:#fff;transition:transform .12s ease,background-color .15s ease}
 .adm-warn-box:active{transform:scale(.94);background:#b42318}
 .adm-warn-box svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ปุ่มทรงเดียวกับ btn-dark แต่สีขาว (เช่น ปุ่มเพิ่มบริการ) */
+.adm .btn-dark.btn-white{background:#fff;color:#1a1a1a;border-color:var(--line)}
+.adm .btn-dark.btn-white:hover{background:#f3f4f6}

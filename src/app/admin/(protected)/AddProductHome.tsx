@@ -44,7 +44,7 @@ export default function AddProductHome({ brands, categories, canDelete, children
           >
             + เพิ่มสินค้า
           </button>
-          <Link href="/admin/services" className="btn btn-dark">+ เพิ่มบริการ</Link>
+          <Link href="/admin/services" className="btn btn-dark btn-white">+ เพิ่มบริการ</Link>
         </div>
       </div>
       {children}
