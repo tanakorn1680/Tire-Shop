@@ -38,7 +38,19 @@ export default function ProductsManager({
   const [busy, setBusy] = useState(false);
   const [qty, setQty] = useState<Record<string, number>>({}); // จำนวนที่กำลังปรับ (ยังไม่บันทึก) แยกตาม id
   const [err, setErr] = useState<string | null>(null);
-  useBackOverride(editing !== null, () => setEditing(null)); // ปุ่มย้อนกลับด้านบน = ปิดฟอร์มกลับรายการ
+  // ปุ่มย้อนกลับด้านบน = ปิดฟอร์มกลับรายการ; ถ้ามีจำนวนที่ปรับไว้แต่ยังไม่บันทึก ให้ถามก่อนออกจากหน้า
+  const pending = Object.keys(qty).length;
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  useBackOverride(editing !== null || pending > 0, () => { if (editing !== null) setEditing(null); else setLeaveOpen(true); });
+  const leave = () => (window.history.length > 1 ? router.back() : router.push("/admin"));
+  async function leaveSave() {
+    setLeaveOpen(false);
+    for (const p of items) {
+      if (qty[p.id] === undefined) continue;
+      if (!(await saveQty(p))) return; // ยกเลิก/ไม่สำเร็จ = อยู่หน้านี้ต่อ
+    }
+    leave();
+  }
   const [drag, setDrag] = useState<{ id: string; x: number; y: number; over: string | null } | null>(null); // กำลังลากการ์ดเพื่อย้ายตำแหน่ง
   const pos = useRef({ x: 0, y: 0 });
   const dragging = drag !== null;
@@ -117,20 +129,21 @@ export default function ProductsManager({
     });
   }
 
-  async function saveQty(p: AdminProduct) {
+  // คืน true = บันทึกแล้ว (หรือไม่มีอะไรต้องบันทึก), false = ยกเลิก/ไม่สำเร็จ
+  async function saveQty(p: AdminProduct): Promise<boolean> {
     const next = qty[p.id];
-    if (next === undefined || next === p.stock_qty) return;
+    if (next === undefined || next === p.stock_qty) return true;
     const unit = typeUnit(p.product_type);
     const note = await askNote({
       action: next > p.stock_qty ? "increase" : "decrease",
       message: `เปลี่ยนจำนวนคงเหลือของ ${p.brand_name} ${p.name}${p.model ? ` ${p.model}` : ""} จาก ${p.stock_qty} เป็น ${next} ${unit} ใช่หรือไม่?`,
     });
-    if (!note) return;
+    if (!note) return false;
     setBusy(true);
     setErr(null);
     const { data, error } = await sb().from("products").update({ stock_qty: next }).eq("id", p.id).select("stock_qty,updated_at").single();
     setBusy(false);
-    if (error || !data) { setErr("บันทึกจำนวนไม่สำเร็จ"); return; }
+    if (error || !data) { setErr("บันทึกจำนวนไม่สำเร็จ"); return false; }
     setItems((xs) => xs.map((x) => (x.id === p.id ? { ...x, stock_qty: data.stock_qty, updated_at: data.updated_at } : x)));
     setQty((m) => {
       const n = { ...m };
@@ -145,6 +158,7 @@ export default function ProductsManager({
       });
       if (!logged) setErr(HISTORY_FAIL_MSG);
     }
+    return true;
   }
 
   // บันทึกลำดับทั้งหมดในครั้งเดียว (ids ว่าง = ล้างลำดับ กลับเป็นจัดอัตโนมัติ)
@@ -245,6 +259,19 @@ export default function ProductsManager({
   return (
     <>
       {noteDialog}
+      {leaveOpen && (
+        <div className="adm-dlg-back">
+          <div className="adm-dlg" role="alertdialog" aria-modal="true" aria-labelledby="adm-leave-t">
+            <h2 id="adm-leave-t">ยังไม่ได้บันทึกจำนวน</h2>
+            <p>มีสินค้า {pending} รายการที่ปรับจำนวนไว้แต่ยังไม่ได้บันทึก ต้องการบันทึกก่อนออกจากหน้านี้หรือไม่?</p>
+            <div className="adm-dlg-acts" style={{ flexDirection: "column" }}>
+              <button type="button" className="btn btn-dark" onClick={leaveSave}>บันทึก</button>
+              <button type="button" className="btn btn-ghost" onClick={leave}>ไม่บันทึก</button>
+              <button type="button" className="btn btn-ghost" onClick={() => setLeaveOpen(false)}>อยู่หน้านี้ต่อ</button>
+            </div>
+          </div>
+        </div>
+      )}
       {items.length > 0 && (
         <div className="adm-tabs" role="tablist">
           <button type="button" className={`adm-tab ${tab === "all" ? "on" : ""}`} onClick={() => { setTab("all"); setLimit(PAGE); }}>
