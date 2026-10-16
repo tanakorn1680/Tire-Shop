@@ -34,20 +34,32 @@ export default async function AdminHome() {
     );
   }
 
-  // ความคืบหน้าการตั้งค่าร้าน (เฉพาะเจ้าของร้าน): ชื่อร้าน เบอร์โทร เวลาเปิด-ปิด ที่อยู่ และลิงก์ Messenger (จำเป็น)
+  // ความคืบหน้าการตั้งค่าร้าน (เฉพาะเจ้าของร้าน): นับครบทุกช่องในหน้า "ตั้งค่าร้าน" (9 ช่อง) เรียงตามหน้าตั้งค่า
+  // ดึงแยกกลุ่มคอลัมน์ ถ้ากลุ่มไหนยังไม่ได้รัน migration (คอลัมน์ยังไม่มี) ช่องนั้นนับเป็นยังไม่กรอก
   let setupSteps: { label: string; done: boolean }[] = [];
   if (role === "owner") {
-    const full = await supabase.from("store_settings").select("store_name,phone,hours,address,messenger_url").eq("id", 1).maybeSingle();
-    const st: Record<string, string | null> = (full.error
-      ? (await supabase.from("store_settings").select("store_name,phone,hours,address").eq("id", 1).maybeSingle()).data
-      : full.data) ?? {};
+    const q = (cols: string) => supabase.from("store_settings").select(cols).eq("id", 1).maybeSingle();
+    const parts = await Promise.all([
+      q("store_name,phone,hours,address,line_url"),
+      q("facebook_url,messenger_url"),
+      q("map_url"),
+      q("store_image_path"),
+    ]);
+    const st: Record<string, string | null> = Object.assign(
+      {},
+      ...parts.map((r) => (r.error ? {} : ((r.data as unknown as Record<string, string | null> | null) ?? {}))),
+    );
     const has = (k: string) => !!st[k]?.trim();
     setupSteps = [
       { label: "ชื่อร้าน", done: has("store_name") },
       { label: "เบอร์โทร", done: has("phone") },
       { label: "เวลาเปิด-ปิด", done: has("hours") },
       { label: "ที่อยู่", done: has("address") },
+      { label: "ลิงก์แผนที่", done: has("map_url") },
+      { label: "ลิงก์ LINE", done: has("line_url") },
+      { label: "ลิงก์ Facebook", done: has("facebook_url") },
       { label: "ลิงก์ Messenger (จำเป็น)", done: has("messenger_url") },
+      { label: "รูปร้านค้า", done: has("store_image_path") },
     ];
   }
 
