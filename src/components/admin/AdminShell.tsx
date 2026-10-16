@@ -12,6 +12,7 @@ const ICONS: Record<string, string[]> = {
   tag: ["M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z", "M7 7h.01"],
   grid: ["M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"],
   clock: ["M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z", "M12 7v5l3 2"],
+  car: ["M5 17a2 2 0 1 0 4 0a2 2 0 1 0-4 0M15 17a2 2 0 1 0 4 0a2 2 0 1 0-4 0", "M5 17H3v-6l2-5h9l4 5h1a2 2 0 0 1 2 2v4h-2M9 17h6M3 11h15M9 11V6"],
   wrench: ["M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"],
 };
 const Icon = ({ n }: { n: string }) => (
@@ -53,6 +54,7 @@ const NAV: { group: string | null; items: { href: string; label: string; icon: s
       { href: "/admin/settings", label: "ตั้งค่าร้าน", icon: "sliders" },
       { href: "/admin/brands", label: "ยี่ห้อ", icon: "tag" },
       { href: "/admin/categories", label: "ประเภทสินค้า", icon: "grid" },
+      { href: "/admin/cars", label: "รุ่นรถ", icon: "car" },
       { href: "/admin/services", label: "บริการ", icon: "wrench" },
     ],
   },

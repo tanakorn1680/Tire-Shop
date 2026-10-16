@@ -77,3 +77,13 @@ export async function getProducts(f: { w?: number; a?: number; r?: number; c?: s
   const { data, error } = await q;
   return { data: (data ?? []) as Product[], error: error ? "โหลดสินค้าไม่สำเร็จ" : null };
 }
+
+// ข้อมูลรุ่นรถ -> ขนาดยางที่ใช้ได้ (แอดมินเพิ่มเอง ตาราง car_fitments ใน migration 0014)
+// ว่างหรือยังไม่ได้รัน migration = คืน [] แล้วช่อง "ค้นหาจากรุ่นรถ" จะถูกซ่อน
+export type Car = { brand: string; model: string; variant: string; sizes: string[] };
+export const getCars = cache(async (): Promise<Car[]> => {
+  const sb = client();
+  if (!sb) return [];
+  const { data, error } = await sb.from("car_fitments").select("brand,model,variant,sizes").order("brand").order("model").order("variant");
+  return error ? [] : ((data ?? []) as Car[]);
+});

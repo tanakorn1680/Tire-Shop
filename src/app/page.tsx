@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getProducts, getSite } from "@/lib/supabase";
+import { getCars, getProducts, getSite } from "@/lib/supabase";
 import SizeSearch from "@/components/SizeSearch";
 import CategoryChips from "@/components/CategoryChips";
 import ProductGrid from "@/components/ProductGrid";
@@ -7,12 +7,12 @@ import ProductGrid from "@/components/ProductGrid";
 export const revalidate = 60;
 
 export default async function Home() {
-  const [{ data, error }, { categories, services }] = await Promise.all([getProducts({ limit: 8 }), getSite()]);
+  const [{ data, error }, { categories, services }, cars] = await Promise.all([getProducts({ limit: 8 }), getSite(), getCars()]);
   return (
     <>
       <div className="band" />
       <div className="wrap up">
-        <SizeSearch />
+        <SizeSearch cars={cars} />
         <CategoryChips items={categories} />
       </div>
       <section className="sec">
