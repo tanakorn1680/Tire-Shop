@@ -102,8 +102,9 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 /* ปุ่มในการ์ดสินค้า + ตะกร้า */
 .btn-out{background:#fff;color:#1a1a1a;border-color:var(--dark)}
 .card-act .btn{font-size:14px}
-.cart-btn{position:relative;gap:6px;padding:8px 12px}
-.cart-ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cart-btn{position:relative;gap:6px;padding:0;min-width:44px;height:44px;justify-content:center;background:none;color:#fff;border-color:transparent;-webkit-tap-highlight-color:transparent}
+.cart-btn .cart-n{position:absolute;top:2px;right:0}
+.cart-ic{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .cart-n{min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--brand);color:#1a1a1a;font-size:12px;line-height:20px;text-align:center}
 .cart-back{position:fixed;inset:0;z-index:100;background:rgba(20,22,27,.55);display:flex;justify-content:flex-end}
 .cart{width:100%;max-width:420px;height:100%;background:#fff;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.2)}
