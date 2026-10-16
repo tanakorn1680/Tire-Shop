@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { useConfirm } from "@/components/admin/Confirm";
@@ -315,6 +316,7 @@ export default function ProductsManager({
         <button className="btn btn-dark" type="button" onClick={onAdd}>
           + เพิ่มสินค้า
         </button>
+        <Link href="/admin/services" className="btn btn-ghost">+ เพิ่มบริการ</Link>
       </div>
 
       {err && <p className="adm-msg err" style={{ marginBottom: 12 }}>{err}</p>}

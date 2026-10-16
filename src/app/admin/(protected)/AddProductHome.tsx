@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Category, Named } from "@/lib/product-meta";
 import { useBackOverride } from "@/components/admin/AdminShell";
@@ -35,13 +36,16 @@ export default function AddProductHome({ brands, categories, canDelete, children
           <h1>หน้าหลัก</h1>
           <p>ภาพรวมสินค้าและสต็อกของร้าน</p>
         </div>
-        <button
-          type="button"
-          className="btn btn-dark"
-          onClick={() => { setOpen(true); window.scrollTo(0, 0); }}
-        >
-          + เพิ่มสินค้า
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            className="btn btn-dark"
+            onClick={() => { setOpen(true); window.scrollTo(0, 0); }}
+          >
+            + เพิ่มสินค้า
+          </button>
+          <Link href="/admin/services" className="btn btn-ghost">+ เพิ่มบริการ</Link>
+        </div>
       </div>
       {children}
     </>
