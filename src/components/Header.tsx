@@ -4,7 +4,7 @@ import CartButton from "./cart/CartButton";
 
 export default async function Header() {
   const { settings: s, services } = await getSite();
-  const name = t(s.store_name), tag = t(s.tagline), phone = t(s.phone), line = t(s.line_url);
+  const name = t(s.store_name), phone = t(s.phone), line = t(s.line_url);
   const nav = [
     { label: "หน้าแรก", href: "/" },
     { label: "สินค้า", href: "/products" },
@@ -15,7 +15,7 @@ export default async function Header() {
   return (
     <header className="hdr">
       <div className="wrap hdr-in">
-        {name && <Link href="/" className="logo"><b>{name}</b>{tag && <small>{tag}</small>}</Link>}
+        {name && <Link href="/" className="logo"><b>{name}</b></Link>}
         <nav className="nav-d">{links()}</nav>
         <div className="hdr-r">
           {phone && <a className="tel" href={`tel:${phone.replace(/[^\d+]/g, "")}`}>{phone}</a>}

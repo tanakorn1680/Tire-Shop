@@ -94,7 +94,6 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
   const router = useRouter();
   const [form, setForm] = useState({
     store_name: initial.store_name ?? "",
-    tagline: initial.tagline ?? "",
     phone: initial.phone ?? "",
     hours: initial.hours ?? "",
     address: initial.address ?? "",
@@ -175,9 +174,6 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
       <div className="adm-f-row">
         <label className="adm-f">ชื่อร้าน
           <input value={form.store_name} onChange={(e) => set("store_name", e.target.value)} placeholder="เช่น ร้านยางสมชาย" />
-        </label>
-        <label className="adm-f">คำโปรย
-          <input value={form.tagline} onChange={(e) => set("tagline", e.target.value)} placeholder="เช่น ยางแท้ ราคาคุ้ม" />
         </label>
       </div>
       <div className="adm-f-row">

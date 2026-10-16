@@ -2,14 +2,14 @@ import { getSite, hasContact, imageUrl, t } from "@/lib/supabase";
 
 export default async function Footer() {
   const { settings: s } = await getSite();
-  const name = t(s.store_name), tag = t(s.tagline), phone = t(s.phone);
+  const name = t(s.store_name), phone = t(s.phone);
   const hours = t(s.hours), address = t(s.address), line = t(s.line_url), fb = t(s.facebook_url);
   const shopImg = imageUrl(s.store_image_path);
   const map = t(s.map_url);
   if (!name && !hasContact(s) && !shopImg && !map) return null;
   const info = (
     <>
-      {name && <div className="logo"><b>{name}</b>{tag && <small>{tag}</small>}</div>}
+      {name && <div className="logo"><b>{name}</b></div>}
       {(phone || hours) && <div>{phone && <>โทร {phone}<br /></>}{hours}</div>}
       {address && <div>{address}</div>}
       {line && <a className="btn btn-brand" href={line}>ติดต่อทาง LINE</a>}

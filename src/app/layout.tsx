@@ -11,8 +11,8 @@ const font = Noto_Sans_Thai({ subsets: ["thai", "latin"], weight: ["400", "600",
 
 export async function generateMetadata(): Promise<Metadata> {
   const { settings: s } = await getSite();
-  const name = t(s.store_name), tag = t(s.tagline);
-  return name ? { title: tag ? `${name} | ${tag}` : name, description: tag || undefined } : {};
+  const name = t(s.store_name);
+  return name ? { title: name } : {};
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
