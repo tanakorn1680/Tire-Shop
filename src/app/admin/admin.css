@@ -306,3 +306,7 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-setup-tx h2{font-size:16px}
 .adm-setup-tx p{font-size:14px;margin-top:2px}
 .adm-setup-tx small{display:block;margin-top:4px;font-size:12px;color:var(--muted)}
+
+/* ปุ่มเมนูมือถือ = สัญลักษณ์ 3 ขีด เหมือนฝั่งลูกค้า (กดเมื่อเมนูเปิดจะเป็นกากบาท) */
+.adm-menu-btn{display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border:0;background:none;color:#fff;-webkit-tap-highlight-color:transparent}
+.adm-menu-btn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
