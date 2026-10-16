@@ -35,13 +35,13 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       .order("occurred_at", { ascending: false })
       .limit(LIMIT)
       .returns<HistoryRow[]>(),
-    supabase.rpc("sales_by_product", { p_from: from, p_to: to, p_limit: TOP }).returns<SalesRow[]>(),
-    supabase.rpc("sales_by_product", { p_from: null, p_to: null, p_limit: TOP }).returns<SalesRow[]>(),
+    supabase.rpc("sales_by_product", { p_from: from, p_to: to, p_limit: TOP }),
+    supabase.rpc("sales_by_product", { p_from: null, p_to: null, p_limit: TOP }),
   ]);
 
   const salesErr = !!(mon.error || all.error);
-  const monRows = mon.data ?? [];
-  const allRows = all.data ?? [];
+  const monRows = (mon.data ?? []) as unknown as SalesRow[];
+  const allRows = (all.data ?? []) as unknown as SalesRow[];
   const sum = (rows: SalesRow[]) => ({ qty: rows[0]?.total_qty ?? 0, times: rows[0]?.total_times ?? 0, products: rows[0]?.total_products ?? 0 });
   const mSum = sum(monRows);
   const aSum = sum(allRows);
