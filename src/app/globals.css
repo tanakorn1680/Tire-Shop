@@ -139,9 +139,7 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 .nav-m summary svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
 .nav-m div{top:48px}
 
-/* รูปร้านค้า (ตั้งค่าร้าน) ด้านล่างหน้าแรก */
-.shop-sec{padding:24px 0}
-.shop-img{display:block;width:100%;max-width:400px;margin:0 auto;aspect-ratio:2/1;object-fit:cover;border-radius:10px;border:1px solid var(--line);box-shadow:0 2px 10px rgba(0,0,0,.08);background:#f0f0f3}
+
 
 /* ปุ่มในการ์ดสินค้า: สั่งซื้อ + ปุ่มไอคอนรถเข็นสี่เหลี่ยมเล็ก */
 .card-act{grid-template-columns:1fr auto;gap:8px;align-items:stretch}
@@ -149,3 +147,10 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 .card-act .btn-cart svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .card-act .btn-cart.ok{color:#16a34a;border-color:#16a34a}
 .card-act .order-hint{grid-column:1/-1}
+
+/* รูปร้านค้าในแถบสีดำท้ายเว็บ: รูปครึ่งหนึ่งของแถบ อีกครึ่งเป็นข้อมูลร้าน */
+.ftr-photo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:center;justify-content:normal}
+.ftr-img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid #2c2f38}
+.ftr-info{display:grid;gap:10px;align-content:center;min-width:0;overflow-wrap:anywhere}
+.ftr-info .btn{justify-self:start}
+@media(min-width:761px){.ftr-photo{grid-template-columns:minmax(0,420px) 1fr;gap:32px}.ftr-img{aspect-ratio:16/10}}
