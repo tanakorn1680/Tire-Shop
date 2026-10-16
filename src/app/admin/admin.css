@@ -187,7 +187,12 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-icon-btn:active:not(:disabled){transform:scale(.97)}
 .adm-icon-btn:disabled{opacity:.4;cursor:default}
 .adm-icon-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-@media(max-width:600px){.adm-grid{grid-template-columns:repeat(2,1fr);gap:10px}}
+.adm-cat-h{display:none}
+@media(max-width:600px){
+  .adm-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .adm-cat-h{display:block;grid-column:1/-1;margin:12px 0 0;padding-bottom:6px;border-bottom:2px solid var(--navy);font-size:15px;font-weight:700;color:var(--navy)}
+  .adm-cat-h:first-child{margin-top:0}
+}
 .adm-panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
 .adm-panel h2{font-size:16px;margin-bottom:10px}
 .adm-panel .adm-row{border:none;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0}

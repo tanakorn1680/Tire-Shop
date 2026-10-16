@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { useConfirm } from "@/components/admin/Confirm";
@@ -40,6 +40,12 @@ export default function ProductsManager({
   const pos = useRef({ x: 0, y: 0 });
   const dragging = drag !== null;
 
+  // ย้ายตำแหน่งได้เฉพาะภายในประเภทเดียวกัน
+  const sameCat = (a: string, b: string | null) => {
+    const pa = items.find((x) => x.id === a), pb = items.find((x) => x.id === b);
+    return !!pa && !!pb && pa.category_id === pb.category_id;
+  };
+
   // ลากใกล้ขอบจอ = เลื่อนหน้าให้อัตโนมัติ (ต้องวัดการ์ดใต้นิ้วใหม่ทุกครั้งที่เลื่อน)
   useEffect(() => {
     if (!dragging) return;
@@ -50,7 +56,7 @@ export default function ProductsManager({
       if (dy) {
         window.scrollBy(0, dy);
         const over = cardAt(x, y);
-        setDrag((d) => (d && d.over !== over && over !== d.id ? { ...d, over } : d));
+        setDrag((d) => (d && d.over !== over && over !== d.id && sameCat(d.id, over) ? { ...d, over } : d));
       }
       raf = requestAnimationFrame(tick);
     };
@@ -74,6 +80,8 @@ export default function ProductsManager({
     [ordered, tab, q, lowOnly],
   );
   const shown = filtered.slice(0, limit);
+  // หน้า "ทั้งหมด" บนมือถือมีหัวข้อคั่นแต่ละประเภท (แสดงเมื่อมีมากกว่า 1 ประเภท)
+  const multiCat = tab === "all" && new Set(shown.map((x) => x.category_id)).size > 1;
 
   function upsertLocal(p: AdminProduct) {
     setItems((xs) => {
@@ -171,7 +179,7 @@ export default function ProductsManager({
     if (!drag) return;
     pos.current = { x: e.clientX, y: e.clientY };
     const over = cardAt(e.clientX, e.clientY);
-    setDrag({ ...drag, x: e.clientX, y: e.clientY, over: over && over !== drag.id ? over : null });
+    setDrag({ ...drag, x: e.clientX, y: e.clientY, over: over && over !== drag.id && sameCat(drag.id, over) ? over : null });
   }
   function endDrag() {
     const d = drag;
@@ -270,13 +278,16 @@ export default function ProductsManager({
         <>
           <p className="adm-sub">แสดง {shown.length} จาก {filtered.length} รายการ · ลากที่ปุ่มจุด 6 จุดบนรูป เพื่อย้ายตำแหน่ง</p>
           <div className="adm-grid">
-            {shown.map((p) => {
+            {shown.map((p, i) => {
+              const catName = categories.find((c) => c.id === p.category_id)?.name ?? typeLabel(p.product_type);
               const img = imageUrl(p.image_path);
               const unit = typeUnit(p.product_type);
               const cur = qty[p.id] ?? p.stock_qty;
               const stock = p.is_individual ? (cur > 0 ? "พร้อมขาย" : "ขายแล้ว") : `${cur} ${unit}`;
               return (
-                <div key={p.id} data-pid={p.id} className={`adm-card ${drag?.id === p.id ? "drag" : ""} ${drag?.over === p.id ? "over" : ""}`}>
+                <Fragment key={p.id}>
+                {multiCat && (i === 0 || p.category_id !== shown[i - 1].category_id) && <h2 className="adm-cat-h">{catName}</h2>}
+                <div data-pid={p.id} className={`adm-card ${drag?.id === p.id ? "drag" : ""} ${drag?.over === p.id ? "over" : ""}`}>
                   <div className="adm-card-img">
                     {img && <img src={img} alt="" loading="lazy" />}
                     <button
@@ -293,7 +304,7 @@ export default function ProductsManager({
                     >
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" /></svg>
                     </button>
-                    <span className={`adm-pill ${CLS[p.product_type]}`}>{categories.find((c) => c.id === p.category_id)?.name ?? typeLabel(p.product_type)}</span>
+                    <span className={`adm-pill ${CLS[p.product_type]}`}>{catName}</span>
                   </div>
                   <b className="adm-card-brand">{p.brand_name}</b>
                   <span>{p.name}{p.model ? ` ${p.model}` : ""}</span>
@@ -318,6 +329,7 @@ export default function ProductsManager({
                     )}
                   </div>
                 </div>
+                </Fragment>
               );
             })}
           </div>

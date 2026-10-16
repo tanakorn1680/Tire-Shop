@@ -124,3 +124,10 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 .cart-sum b{font-size:22px}
 .cart-ft .btn{justify-content:center;min-height:48px}
 .cart-clear{background:none;border:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:4px}
+
+/* หัวข้อคั่นประเภทในหน้า "ทั้งหมด" แสดงเฉพาะมือถือ (การ์ด 2 คอลัมน์เหมือนเดิม) */
+.grid .cat-h{display:none}
+@media(max-width:760px){
+  .grid .cat-h{display:block;grid-column:1/-1;margin:14px 0 0;padding-bottom:6px;border-bottom:2px solid var(--brand);font-size:15px;font-weight:700}
+  .grid .cat-h:first-child{margin-top:0}
+}

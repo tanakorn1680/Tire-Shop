@@ -25,7 +25,7 @@ export default async function Products({ searchParams }: {
       </div>
       <div className="wrap sec">
         <h1 className="sec-t">สินค้า ({data.length})</h1>
-        <ProductGrid items={data} error={error} filtered={!!(s.w || s.a || s.r || c)} />
+        <ProductGrid items={data} error={error} filtered={!!(s.w || s.a || s.r || c)} grouped={!c} />
       </div>
     </>
   );

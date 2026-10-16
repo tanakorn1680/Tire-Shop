@@ -46,15 +46,17 @@ export const PRODUCT_COLUMNS =
   "wheel_width_in,wheel_pcd,wheel_bolts,wheel_offset_mm," +
   "cost_price,sale_price,stock_qty,low_stock_threshold,image_path,category_id,is_active,updated_at,sort_order,brands(name)";
 
-// ลำดับแสดงผล: ที่แอดมินจัดไว้ (sort_order) มาก่อน ที่เหลือจัดอัตโนมัติ = ตามประเภท แล้วราคาน้อยไปมาก
+// ลำดับแสดงผล: จัดเป็นกลุ่มตามประเภทก่อน ในแต่ละประเภทที่แอดมินจัดไว้ (sort_order) มาก่อน ที่เหลือจัดอัตโนมัติตามราคาน้อยไปมาก
 export function sortProducts(items: AdminProduct[], categories: Category[]): AdminProduct[] {
   const rank = new Map(categories.map((c, i) => [c.id, i]));
   const r = (p: AdminProduct) => (p.category_id ? rank.get(p.category_id) ?? categories.length : categories.length);
   return [...items].sort((a, b) => {
+    const c = r(a) - r(b);
+    if (c) return c;
     if (a.sort_order !== null && b.sort_order !== null) return a.sort_order - b.sort_order;
     if (a.sort_order !== null) return -1;
     if (b.sort_order !== null) return 1;
-    return r(a) - r(b) || Number(a.sale_price) - Number(b.sale_price) || a.name.localeCompare(b.name, "th");
+    return Number(a.sale_price) - Number(b.sale_price) || a.name.localeCompare(b.name, "th");
   });
 }
 
