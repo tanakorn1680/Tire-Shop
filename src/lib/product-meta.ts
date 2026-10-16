@@ -32,6 +32,7 @@ export type AdminProduct = {
   wheel_width_in: number | null; wheel_pcd: string | null; wheel_bolts: number | null; wheel_offset_mm: number | null;
   cost_price: number; sale_price: number; stock_qty: number; low_stock_threshold: number;
   image_path: string | null; category_id: string | null; is_active: boolean; updated_at: string;
+  sort_order: number | null; // ลำดับที่แอดมินจัดไว้ (null = จัดอัตโนมัติ)
 };
 export type Named = { id: string; name: string };
 // ประเภทสินค้าที่แอดมินเพิ่มเอง (product_type = รูปแบบฟอร์มกรอกข้อมูล)
@@ -43,7 +44,19 @@ export const PRODUCT_COLUMNS =
   "width_mm,aspect_ratio,rim_inch,size_label,load_index,speed_rating,dot_week,dot_year," +
   "tread_depth_mm,condition_note,defect_note,repair_note," +
   "wheel_width_in,wheel_pcd,wheel_bolts,wheel_offset_mm," +
-  "cost_price,sale_price,stock_qty,low_stock_threshold,image_path,category_id,is_active,updated_at,brands(name)";
+  "cost_price,sale_price,stock_qty,low_stock_threshold,image_path,category_id,is_active,updated_at,sort_order,brands(name)";
+
+// ลำดับแสดงผล: ที่แอดมินจัดไว้ (sort_order) มาก่อน ที่เหลือจัดอัตโนมัติ = ตามประเภท แล้วราคาน้อยไปมาก
+export function sortProducts(items: AdminProduct[], categories: Category[]): AdminProduct[] {
+  const rank = new Map(categories.map((c, i) => [c.id, i]));
+  const r = (p: AdminProduct) => (p.category_id ? rank.get(p.category_id) ?? categories.length : categories.length);
+  return [...items].sort((a, b) => {
+    if (a.sort_order !== null && b.sort_order !== null) return a.sort_order - b.sort_order;
+    if (a.sort_order !== null) return -1;
+    if (b.sort_order !== null) return 1;
+    return r(a) - r(b) || Number(a.sale_price) - Number(b.sale_price) || a.name.localeCompare(b.name, "th");
+  });
+}
 
 export const baht = (n: number | string) => Number(n).toLocaleString("th-TH");
 

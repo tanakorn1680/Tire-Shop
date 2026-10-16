@@ -39,7 +39,7 @@ export default async function ProductsPage({
       </div>
       {products.error || categories.error ? (
         <p className="adm-msg err">
-          โหลดสินค้าไม่สำเร็จ — ถ้าเพิ่งอัปเดตโค้ด ให้รัน migration 0004_product_types.sql และ 0005_category_kind.sql ใน Supabase SQL Editor ก่อน
+          โหลดสินค้าไม่สำเร็จ — ถ้าเพิ่งอัปเดตโค้ด ให้รัน migration 0004_product_types.sql, 0005_category_kind.sql และ 0007_product_sort_order.sql ใน Supabase SQL Editor ก่อน
           (ข้อมูลเดิมยังอยู่ครบ ไม่ได้หายไป)
         </p>
       ) : (

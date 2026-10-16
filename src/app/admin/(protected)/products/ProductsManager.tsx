@@ -1,19 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { useConfirm } from "@/components/admin/Confirm";
 import { useBackOverride } from "@/components/admin/AdminShell";
 import { imageUrl } from "@/lib/supabase";
 import {
-  baht, dateTimeText, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
+  baht, dateTimeText, isLowStock, matchesQuery, sortProducts, specText, typeLabel, typeUnit,
   type AdminProduct, type Category, type Named, type ProductType,
 } from "@/lib/product-meta";
 import ProductForm from "./ProductForm";
 
 const PAGE = 50;
 const CLS: Record<ProductType, string> = { new_tire: "t-new", used_tire: "t-used", wheel: "t-wheel" };
+
+// id ของการ์ดสินค้าที่อยู่ใต้ตำแหน่งนิ้ว/เมาส์
+const cardAt = (x: number, y: number) => document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-pid]")?.dataset.pid ?? null;
 
 export default function ProductsManager({
   initial, brands, categories, canDelete, initialQ, initialCat = "all", initialAdd = false,
@@ -33,6 +36,27 @@ export default function ProductsManager({
   const [qty, setQty] = useState<Record<string, number>>({}); // จำนวนที่กำลังปรับ (ยังไม่บันทึก) แยกตาม id
   const [err, setErr] = useState<string | null>(null);
   useBackOverride(editing !== null, () => setEditing(null)); // ปุ่มย้อนกลับด้านบน = ปิดฟอร์มกลับรายการ
+  const [drag, setDrag] = useState<{ id: string; x: number; y: number; over: string | null } | null>(null); // กำลังลากการ์ดเพื่อย้ายตำแหน่ง
+  const pos = useRef({ x: 0, y: 0 });
+  const dragging = drag !== null;
+
+  // ลากใกล้ขอบจอ = เลื่อนหน้าให้อัตโนมัติ (ต้องวัดการ์ดใต้นิ้วใหม่ทุกครั้งที่เลื่อน)
+  useEffect(() => {
+    if (!dragging) return;
+    let raf = 0;
+    const tick = () => {
+      const { x, y } = pos.current, h = window.innerHeight;
+      const dy = y < 90 ? -(90 - y) / 4 - 2 : y > h - 90 ? (y - (h - 90)) / 4 + 2 : 0;
+      if (dy) {
+        window.scrollBy(0, dy);
+        const over = cardAt(x, y);
+        setDrag((d) => (d && d.over !== over && over !== d.id ? { ...d, over } : d));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [dragging]);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: items.length };
@@ -44,9 +68,10 @@ export default function ProductsManager({
   const tab: string = tabRaw !== "all" && !counts[tabRaw] ? "all" : tabRaw;
   const typesInUse = categories.filter((t) => counts[t.id] > 0);
 
+  const ordered = useMemo(() => sortProducts(items, categories), [items, categories]);
   const filtered = useMemo(
-    () => items.filter((p) => (tab === "all" || p.category_id === tab) && (!lowOnly || isLowStock(p)) && matchesQuery(p, q)),
-    [items, tab, q, lowOnly],
+    () => ordered.filter((p) => (tab === "all" || p.category_id === tab) && (!lowOnly || isLowStock(p)) && matchesQuery(p, q)),
+    [ordered, tab, q, lowOnly],
   );
   const shown = filtered.slice(0, limit);
 
@@ -103,6 +128,55 @@ export default function ProductsManager({
       return n;
     });
     router.refresh();
+  }
+
+  // บันทึกลำดับทั้งหมดในครั้งเดียว (ids ว่าง = ล้างลำดับ กลับเป็นจัดอัตโนมัติ)
+  async function saveOrder(ids: string[]) {
+    const prev = items;
+    const at = new Map(ids.map((id, i) => [id, i]));
+    setItems((xs) => xs.map((x) => ({ ...x, sort_order: at.get(x.id) ?? null })));
+    setBusy(true);
+    setErr(null);
+    const { error } = await sb().rpc("set_product_order", { ids });
+    setBusy(false);
+    if (error) { setItems(prev); setErr("บันทึกตำแหน่งไม่สำเร็จ"); return; }
+    router.refresh();
+  }
+
+  // ย้ายการ์ดไปอยู่ตำแหน่งของการ์ดปลายทาง (ลำดับจริงคิดจากสินค้าทั้งหมด ไม่ใช่เฉพาะที่กรองอยู่)
+  function moveTo(fromId: string, toId: string) {
+    const ids = ordered.map((x) => x.id);
+    const from = ids.indexOf(fromId), to = ids.indexOf(toId);
+    if (from < 0 || to < 0) return;
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    return saveOrder(ids);
+  }
+
+  async function resetOrder() {
+    const ok = await ask({
+      title: "จัดเรียงอัตโนมัติ",
+      message: "ล้างตำแหน่งที่จัดไว้ แล้วเรียงตามประเภทสินค้า และราคาจากน้อยไปมาก ใช่หรือไม่?",
+      confirmText: "จัดเรียงอัตโนมัติ",
+    });
+    if (ok) await saveOrder([]);
+  }
+
+  function startDrag(e: React.PointerEvent<HTMLElement>, id: string) {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    pos.current = { x: e.clientX, y: e.clientY };
+    setDrag({ id, x: e.clientX, y: e.clientY, over: null });
+  }
+  function moveDrag(e: React.PointerEvent<HTMLElement>) {
+    if (!drag) return;
+    pos.current = { x: e.clientX, y: e.clientY };
+    const over = cardAt(e.clientX, e.clientY);
+    setDrag({ ...drag, x: e.clientX, y: e.clientY, over: over && over !== drag.id ? over : null });
+  }
+  function endDrag() {
+    const d = drag;
+    setDrag(null);
+    if (d?.over) void moveTo(d.id, d.over);
   }
 
   async function remove(id: string) {
@@ -167,7 +241,19 @@ export default function ProductsManager({
             </button>
           </>
         )}
-        <button className="btn btn-dark" type="button" onClick={onAdd} style={items.length === 0 ? undefined : { marginLeft: "auto" }}>
+        {items.length > 0 && (
+          <button
+            type="button"
+            className="adm-icon-btn"
+            title="จัดเรียงอัตโนมัติ"
+            aria-label="จัดเรียงอัตโนมัติ (ตามประเภท ราคาน้อยไปมาก)"
+            onClick={resetOrder}
+            disabled={busy || !items.some((x) => x.sort_order !== null)}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5" /></svg>
+          </button>
+        )}
+        <button className="btn btn-dark" type="button" onClick={onAdd}>
           + เพิ่มสินค้า
         </button>
       </div>
@@ -182,65 +268,70 @@ export default function ProductsManager({
         <p className="adm-empty">ไม่พบสินค้าที่ตรงกับการค้นหา</p>
       ) : (
         <>
-          <p className="adm-sub">แสดง {shown.length} จาก {filtered.length} รายการ</p>
-          <table className="adm-tbl">
-            <thead>
-              <tr>
-                <th>รูป</th><th>สินค้า</th><th>ขนาด / รายละเอียด</th><th>ประเภท</th>
-                <th className="num">คงเหลือ</th><th className="num">ราคาขาย</th><th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((p) => {
-                const img = imageUrl(p.image_path);
-                const unit = typeUnit(p.product_type);
-                const cur = qty[p.id] ?? p.stock_qty;
-                const stock = p.is_individual ? (cur > 0 ? "พร้อมขาย" : "ขายแล้ว") : `${cur} ${unit}`;
-                return (
-                  <tr key={p.id}>
-                    <td data-label="รูป">{img ? <img className="adm-thumb" src={img} alt="" /> : <div className="adm-thumb" />}</td>
-                    <td className="main">
-                      <b>{p.brand_name} {p.name}{p.model ? ` ${p.model}` : ""}</b>
-                      <small>
-                        {p.sku ? `รหัส ${p.sku}` : ""}{p.sku && p.storage_location ? " · " : ""}{p.storage_location ? `ที่เก็บ ${p.storage_location}` : ""}
-                      </small>
-                      <small>แก้ไขล่าสุด {dateTimeText(p.updated_at)}</small>
-                    </td>
-                    <td data-label="ขนาด">{specText(p) || "-"}</td>
-                    <td data-label="ประเภท"><span className={`adm-pill ${CLS[p.product_type]}`}>{categories.find((c) => c.id === p.category_id)?.name ?? typeLabel(p.product_type)}</span></td>
-                    <td className="num" data-label="คงเหลือ">
-                      <div className="adm-qty">
-                        {isLowStock(p) && <span className="adm-row-tag off">ใกล้หมด</span>}
-                        {!p.is_active && <span className="adm-row-tag off">ซ่อน</span>}
-                        <button type="button" className="adm-qty-btn" aria-label="ลดจำนวน" onClick={() => bump(p, -1)} disabled={busy || cur <= 0}>−</button>
-                        <span className={`adm-qty-val ${isLowStock(p) ? "adm-low" : ""}`}>{stock}</span>
-                        <button type="button" className="adm-qty-btn" aria-label="เพิ่มจำนวน" onClick={() => bump(p, 1)} disabled={busy || (p.is_individual && cur >= 1)}>+</button>
-                        <button type="button" className="btn btn-dark btn-sm" onClick={() => saveQty(p)} disabled={busy || cur === p.stock_qty}>บันทึก</button>
-                      </div>
-                    </td>
-                    <td className="num" data-label="ราคาขาย">฿{baht(p.sale_price)}</td>
-                    <td className="acts-c">
-                      <div className="acts">
-                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => setEditing(p)}>แก้ไข</button>
-                        <button className="btn btn-ghost btn-sm" type="button" onClick={() => toggleActive(p)} disabled={busy}>
-                          {p.is_active ? "ซ่อน" : "แสดง"}
-                        </button>
-                        {canDelete && (
-                          <button className="btn btn-danger btn-sm" type="button" onClick={() => remove(p.id)} disabled={busy}>ลบ</button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <p className="adm-sub">แสดง {shown.length} จาก {filtered.length} รายการ · ลากที่ปุ่มจุด 6 จุดบนรูป เพื่อย้ายตำแหน่ง</p>
+          <div className="adm-grid">
+            {shown.map((p) => {
+              const img = imageUrl(p.image_path);
+              const unit = typeUnit(p.product_type);
+              const cur = qty[p.id] ?? p.stock_qty;
+              const stock = p.is_individual ? (cur > 0 ? "พร้อมขาย" : "ขายแล้ว") : `${cur} ${unit}`;
+              return (
+                <div key={p.id} data-pid={p.id} className={`adm-card ${drag?.id === p.id ? "drag" : ""} ${drag?.over === p.id ? "over" : ""}`}>
+                  <div className="adm-card-img">
+                    {img && <img src={img} alt="" loading="lazy" />}
+                    <button
+                      type="button"
+                      className="adm-grip"
+                      title="ลากเพื่อย้ายตำแหน่ง"
+                      aria-label="ลากเพื่อย้ายตำแหน่ง"
+                      disabled={busy}
+                      onPointerDown={(e) => startDrag(e, p.id)}
+                      onPointerMove={moveDrag}
+                      onPointerUp={endDrag}
+                      onPointerCancel={() => setDrag(null)}
+                      onContextMenu={(e) => e.preventDefault()}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" /></svg>
+                    </button>
+                    <span className={`adm-pill ${CLS[p.product_type]}`}>{categories.find((c) => c.id === p.category_id)?.name ?? typeLabel(p.product_type)}</span>
+                  </div>
+                  <b className="adm-card-brand">{p.brand_name}</b>
+                  <span>{p.name}{p.model ? ` ${p.model}` : ""}</span>
+                  <small>{specText(p) || "-"}</small>
+                  <div className="adm-card-price">฿{baht(p.sale_price)}</div>
+                  <div className="adm-qty">
+                    {isLowStock(p) && <span className="adm-row-tag off">ใกล้หมด</span>}
+                    {!p.is_active && <span className="adm-row-tag off">ซ่อน</span>}
+                    <button type="button" className="adm-qty-btn" aria-label="ลดจำนวน" onClick={() => bump(p, -1)} disabled={busy || cur <= 0}>−</button>
+                    <span className={`adm-qty-val ${isLowStock(p) ? "adm-low" : ""}`}>{stock}</span>
+                    <button type="button" className="adm-qty-btn" aria-label="เพิ่มจำนวน" onClick={() => bump(p, 1)} disabled={busy || (p.is_individual && cur >= 1)}>+</button>
+                    <button type="button" className="btn btn-dark btn-sm" onClick={() => saveQty(p)} disabled={busy || cur === p.stock_qty}>บันทึก</button>
+                  </div>
+                  <small>แก้ไขล่าสุด {dateTimeText(p.updated_at)}</small>
+                  <div className="acts">
+                    <button className="btn btn-ghost btn-sm" type="button" onClick={() => setEditing(p)}>แก้ไข</button>
+                    <button className="btn btn-ghost btn-sm" type="button" onClick={() => toggleActive(p)} disabled={busy}>
+                      {p.is_active ? "ซ่อน" : "แสดง"}
+                    </button>
+                    {canDelete && (
+                      <button className="btn btn-danger btn-sm" type="button" onClick={() => remove(p.id)} disabled={busy}>ลบ</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           {filtered.length > shown.length && (
             <div className="adm-more">
               <button className="btn btn-ghost" type="button" onClick={() => setLimit((n) => n + PAGE)}>แสดงเพิ่ม</button>
             </div>
           )}
         </>
+      )}
+      {drag && (
+        <div className="adm-ghost" style={{ left: drag.x, top: drag.y }}>
+          {(() => { const g = items.find((x) => x.id === drag.id); return g ? `${g.brand_name} ${g.name}` : ""; })()}
+        </div>
       )}
     </>
   );

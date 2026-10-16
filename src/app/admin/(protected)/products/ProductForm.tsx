@@ -547,12 +547,6 @@ export default function ProductForm({
         <summary>รายละเอียดเพิ่มเติม <span>ไม่บังคับ กรอกทีหลังได้</span></summary>
         <div className="adm-opt-body">
           <div className="adm-f-row">
-            <label className="adm-f">รหัสสินค้า
-              <input value={form.sku} onChange={(e) => set("sku", e.target.value)} placeholder="เช่น MIC-2055516-01" />
-            </label>
-            <label className="adm-f">ตำแหน่งจัดเก็บ
-              <input value={form.storage_location} onChange={(e) => set("storage_location", e.target.value)} placeholder="เช่น ชั้น A แถว 2" />
-            </label>
             <label className="adm-f">{isWheel ? "รุ่นย่อย / ลาย" : "รุ่นย่อย"}
               <input value={form.model} onChange={(e) => set("model", e.target.value)} />
             </label>

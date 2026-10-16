@@ -163,6 +163,31 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-qty-btn{width:40px;height:40px;flex:none;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--navy);font-size:22px;font-weight:700;line-height:1;cursor:pointer}
 .adm-qty-btn:disabled{opacity:.4;cursor:default}
 .adm-qty-val{min-width:56px;text-align:center}
+
+/* ===== การ์ดสินค้า (หน้าสินค้าและสต็อก) ใช้รูปแบบเดียวกับหน้าเว็บ ===== */
+.adm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.adm-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0;transition:box-shadow .15s,opacity .15s,border-color .15s}
+.adm-card.drag{opacity:.35}
+.adm-card.over{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
+.adm-card-img{position:relative;aspect-ratio:4/3;background:#f0f0f3;border-radius:8px;overflow:hidden;margin-bottom:4px}
+.adm-card-img img{width:100%;height:100%;object-fit:contain}
+.adm-card-img .adm-pill{position:absolute;right:6px;bottom:6px}
+.adm-grip{position:absolute;left:6px;top:6px;width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.92);display:grid;place-items:center;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.adm-grip:disabled{opacity:.4;cursor:default}
+.adm-grip svg{width:22px;height:22px;fill:none;stroke:#374151;stroke-width:3;stroke-linecap:round}
+.adm-card-brand{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.adm-card small{color:var(--muted);font-size:12px}
+.adm-card-price{font-size:17px;font-weight:700}
+.adm-card .adm-qty{justify-content:center;margin-top:4px}
+.adm-card .adm-qty .btn{flex:1 1 100%}
+.adm-card .acts{display:flex;gap:6px;margin-top:6px}
+.adm-card .acts .btn{flex:1;padding:0 4px;font-size:13px;min-height:40px;justify-content:center}
+.adm-ghost{position:fixed;z-index:200;pointer-events:none;transform:translate(-50%,-130%);max-width:220px;padding:8px 12px;border-radius:10px;background:var(--navy);color:#fff;font-size:13px;font-weight:700;box-shadow:0 8px 20px rgba(22,33,46,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adm-icon-btn{width:46px;height:46px;margin-left:auto;border:1px solid var(--line);border-radius:10px;background:#fff;color:#374151;display:grid;place-items:center;cursor:pointer;transition:transform .12s ease,background-color .15s ease}
+.adm-icon-btn:active:not(:disabled){transform:scale(.97)}
+.adm-icon-btn:disabled{opacity:.4;cursor:default}
+.adm-icon-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:600px){.adm-grid{grid-template-columns:repeat(2,1fr);gap:10px}}
 .adm-panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
 .adm-panel h2{font-size:16px;margin-bottom:10px}
 .adm-panel .adm-row{border:none;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0}
