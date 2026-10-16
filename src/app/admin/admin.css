@@ -23,7 +23,8 @@ body:has(.adm, .adm-auth) > .shop-sec{display:none}
 .adm .btn,.adm-qty-btn,.adm-back,.adm-menu-btn,.adm-signout,.adm-side a,.adm-drawer a{transition:background-color .15s ease,color .15s ease,border-color .15s ease,transform .12s ease}
 .adm .btn:active:not(:disabled),.adm-qty-btn:active:not(:disabled),.adm-back:active,.adm-menu-btn:active,.adm-signout:active{transform:scale(.97)}
 .adm-side a:not(.on):active,.adm-drawer a:not(.on):active{background:rgba(255,255,255,.12)}
-.adm-back{flex:none;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#374151;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+.adm-back{flex:none;display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border-radius:10px;border:1px solid var(--line);background:#fff;color:#374151;cursor:pointer}
+.adm-back-ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .adm-tb{display:flex;align-items:center;gap:14px;padding:14px 24px;background:#fff;border-bottom:1px solid var(--line)}
 .adm-tb form{flex:1;max-width:560px}
 .adm-tb input{width:100%;min-height:46px;padding:0 14px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:16px;background:#f8f9fb}
@@ -38,7 +39,7 @@ body:has(.adm, .adm-auth) > .shop-sec{display:none}
   .adm-top{display:flex;position:sticky;top:0;z-index:20;height:56px;align-items:center;justify-content:space-between;padding:0 12px;background:var(--navy);color:#fff}
   .adm-top .adm-brand{padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .adm-top-l{display:flex;align-items:center;gap:10px;min-width:0}
-  .adm-top .adm-back{padding:0 12px;border-color:#444a56;background:none;color:#fff}
+  .adm-top .adm-back{border-color:#444a56;background:none;color:#fff}
   .adm-back-d{display:none}
   .adm-menu-btn{min-height:44px;padding:0 20px;border-radius:10px;border:1px solid #444a56;background:none;color:#fff;font:inherit;font-weight:700;cursor:pointer}
   .adm-drawer{position:fixed;top:56px;left:0;right:0;bottom:0;z-index:30;background:var(--navy);overflow-y:auto;padding:8px 12px 24px;display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .22s ease,transform .22s ease,visibility 0s linear .22s}
@@ -170,7 +171,7 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0;transition:box-shadow .15s,opacity .15s,border-color .15s}
 .adm-card.drag{opacity:.35}
 .adm-card.over{border-color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
-.adm-card-img{position:relative;aspect-ratio:4/3;background:#f0f0f3;border-radius:8px;overflow:hidden;margin-bottom:4px}
+.adm-card-img{position:relative;aspect-ratio:1;background:#f0f0f3;border-radius:8px;overflow:hidden;margin-bottom:4px}
 .adm-card-img img{width:100%;height:100%;object-fit:contain}
 .adm-card-img .adm-pill{position:absolute;right:6px;bottom:6px}
 .adm-grip{position:absolute;left:6px;top:6px;width:40px;height:40px;padding:0;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.92);display:grid;place-items:center;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -318,3 +319,8 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-img-main{position:absolute;left:4px;top:4px;font-size:11px;background:var(--blue);color:#fff;border-radius:6px;padding:1px 6px}
 .adm-img-x{position:absolute;right:4px;top:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:16px;line-height:1;cursor:pointer}
 .adm-img-set{border:0;background:none;color:var(--blue);font:inherit;font-size:12px;cursor:pointer;padding:2px}
+
+/* อนิเมชั่นตอนกดของปุ่มที่เหลือ (แทนแถบสีฟ้าของเบราว์เซอร์) */
+.adm-tab,.adm-pick-c,.adm-gear-btn,.adm-combo-arrow,.adm-pop-del,.adm-img-x,.adm-img-set,.adm-pop-o,.adm-pop-new,.adm-pop-link,.adm-gear-pop a{transition:transform .12s ease,background-color .15s ease,color .15s ease,border-color .15s ease,filter .15s ease}
+.adm-tab:active,.adm-pick-c:active,.adm-gear-btn:active,.adm-combo-arrow:active,.adm-pop-del:active,.adm-img-x:active,.adm-img-set:active{transform:scale(.96)}
+.adm-pop-o:active,.adm-pop-new:active,.adm-pop-link:active,.adm-gear-pop a:active{background:#e3ebf6}

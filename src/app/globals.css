@@ -188,3 +188,9 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 .ftr-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ftr-fb{background:#1877f2;color:#fff}
 .ftr-map{background:var(--brand);color:#1a1a1a}
+
+/* ไม่ให้เบราว์เซอร์มือถือขึ้นแถบสีฟ้าตอนแตะ ใช้อนิเมชั่นตอนกดแทน */
+*{-webkit-tap-highlight-color:transparent}
+.btn,.chips a,.nav-m summary,.nav-m a,.cart-qty button,.cart-x,.pd-x,.pd-thumbs button{transition:transform .12s ease,background-color .15s ease,border-color .15s ease}
+.btn:active,.chips a:active,.nav-m summary:active,.cart-qty button:active:not(:disabled),.cart-x:active,.pd-x:active,.pd-thumbs button:active{transform:scale(.96)}
+.nav-m a:active{background:rgba(255,255,255,.12)}

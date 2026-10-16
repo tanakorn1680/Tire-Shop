@@ -16,6 +16,10 @@ const ICONS: Record<string, string[]> = {
 const Icon = ({ n }: { n: string }) => (
   <svg className="adm-ic" viewBox="0 0 24 24" aria-hidden="true">{ICONS[n].map((d, i) => <path key={i} d={d} />)}</svg>
 );
+// ปุ่มย้อนกลับ = สัญลักษณ์ลูกศรอย่างเดียว (ไม่มีข้อความ)
+const BackIcon = () => (
+  <svg className="adm-back-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+);
 import { sb } from "@/lib/supabase-browser";
 import { ConfirmProvider } from "./Confirm";
 
@@ -120,7 +124,7 @@ export default function AdminShell({
       <div className="adm-body">
         <header className="adm-top">
           <div className="adm-top-l">
-            {showBack && <button type="button" className="adm-back" onClick={goBack}>‹ ย้อนกลับ</button>}
+            {showBack && <button type="button" className="adm-back" onClick={goBack} aria-label="ย้อนกลับ"><BackIcon /></button>}
             <span className="adm-brand">{name}</span>
           </div>
           <button type="button" className="adm-menu-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-label={open ? "ปิดเมนู" : "เมนู"}>
@@ -135,7 +139,7 @@ export default function AdminShell({
           </div>
         </div>
         <div className="adm-tb">
-          {showBack && <button type="button" className="adm-back adm-back-d" onClick={goBack}>‹ ย้อนกลับ</button>}
+          {showBack && <button type="button" className="adm-back adm-back-d" onClick={goBack} aria-label="ย้อนกลับ"><BackIcon /></button>}
           {/* หน้าสินค้ามีช่องค้นหาของตัวเองอยู่แล้ว ไม่แสดงซ้ำ */}
           {!pathname.startsWith("/admin/products") && <form onSubmit={(e) => { e.preventDefault(); router.push(`/admin/products${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`); }}>
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาสินค้า / ยี่ห้อ / รุ่น / ขนาด ..." />
