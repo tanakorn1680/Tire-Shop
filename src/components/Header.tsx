@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getSite, hasContact, t } from "@/lib/supabase";
+import CartButton from "./cart/CartButton";
 
 export default async function Header() {
   const { settings: s, services } = await getSite();
@@ -19,6 +20,7 @@ export default async function Header() {
         <div className="hdr-r">
           {phone && <a className="tel" href={`tel:${phone.replace(/[^\d+]/g, "")}`}>{phone}</a>}
           {line && <a className="btn btn-line" href={line}>LINE</a>}
+          <CartButton />
         </div>
         <details className="nav-m">
           <summary aria-label="เมนู">เมนู</summary>

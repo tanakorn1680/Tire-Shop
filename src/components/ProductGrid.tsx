@@ -1,20 +1,14 @@
 import { getSite, imageUrl, t, type Product } from "@/lib/supabase";
-import { messengerOrderUrl } from "@/lib/links";
-import OrderLink from "./OrderLink";
+import { orderUrl, singleOrderText, type OrderItem } from "@/lib/order";
+import CardActions from "./CardActions";
 
-// ข้อความที่ส่งเข้าแชท: สั้น อ่านง่ายทั้งลูกค้าและร้าน มีชื่อสินค้า ขนาด ราคา จำนวน
-function orderText(p: Product): string {
-  const price = Number(p.sale_price).toLocaleString("th-TH");
-  const size = p.size_label ? `${p.size_label}${p.load_index ? ` ${p.load_index}${p.speed_rating ?? ""}` : ""}` : "";
-  const detail = [
-    p.category_name ? `ประเภท: ${p.category_name}` : "",
-    `สินค้า: ${p.brand_name} ${p.name}${p.model ? ` ${p.model}` : ""}`,
-    size ? `ขนาด: ${size}` : "",
-    `ราคา: ${price} บาท`,
-    "จำนวน: 1",
-  ].filter(Boolean).join("\n");
-  return `สนใจสั่งซื้อสินค้านี้\n\n${detail}`;
-}
+const toItem = (p: Product): Omit<OrderItem, "qty"> => ({
+  id: p.id,
+  name: `${p.brand_name} ${p.name}${p.model ? ` ${p.model}` : ""}`,
+  category: p.category_name ?? "",
+  size: p.size_label ? `${p.size_label}${p.load_index ? ` ${p.load_index}${p.speed_rating ?? ""}` : ""}` : "",
+  price: Number(p.sale_price),
+});
 
 export default async function ProductGrid({ items, error, filtered }: {
   items: Product[]; error: string | null; filtered?: boolean;
@@ -27,7 +21,7 @@ export default async function ProductGrid({ items, error, filtered }: {
     <div className="grid">
       {items.map((p) => {
         const img = imageUrl(p.image_path);
-        const text = orderText(p);
+        const item = toItem(p);
         return (
           <div className="card" key={p.id}>
             <div className="img">{img && <img src={img} alt={`${p.brand_name} ${p.name}`} loading="lazy" />}</div>
@@ -37,9 +31,7 @@ export default async function ProductGrid({ items, error, filtered }: {
             <div className="price">฿{Number(p.sale_price).toLocaleString("th-TH")}</div>
             {!p.in_stock && <span className="tag">สินค้าหมดชั่วคราว</span>}
             {p.in_stock && messenger && (
-              <div className="card-act">
-                <OrderLink href={messengerOrderUrl(messenger, text)} text={text} label="สั่งซื้อ" />
-              </div>
+              <CardActions item={item} href={orderUrl(messenger, singleOrderText({ ...item, qty: 1 }))} />
             )}
           </div>
         );
