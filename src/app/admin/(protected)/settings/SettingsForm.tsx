@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { normalizeUrl } from "@/lib/links";
 import { imageUrl } from "@/lib/supabase";
+import { useConfirm } from "@/components/admin/Confirm";
 
 type Settings = {
   store_name?: string | null; tagline?: string | null; phone?: string | null;
@@ -92,6 +93,7 @@ function LinkField({ id, label, value, onChange, placeholder, hint, required }: 
 
 export default function SettingsForm({ initial, needMigration = false, photoReady = true, mapReady = true }: { initial: Settings; needMigration?: boolean; photoReady?: boolean; mapReady?: boolean }) {
   const router = useRouter();
+  const ask = useConfirm();
   const [form, setForm] = useState({
     store_name: initial.store_name ?? "",
     phone: initial.phone ?? "",
@@ -132,10 +134,15 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
       setMsg({ ok: false, text: "ยังบันทึกไม่ได้ ต้องรัน migration 0006_social_links.sql ใน Supabase SQL Editor ก่อน" });
       return;
     }
-    // ลิงก์ Messenger จำเป็น (ใช้เป็นปุ่มสั่งซื้อในหน้าเว็บลูกค้า) ลิงก์ Facebook ไม่บังคับ
-    const messenger = normalizeUrl(form.messenger_url);
-    if (!messenger) {
-      setMsg({ ok: false, text: form.messenger_url.trim() ? "ลิงก์ Messenger ไม่ถูกต้อง" : "กรุณากรอกลิงก์ Messenger (ใช้เป็นปุ่มสั่งซื้อในหน้าเว็บ)" });
+    // ลิงก์ Messenger จำเป็น (ใช้เป็นปุ่มสั่งซื้อในหน้าเว็บลูกค้า) ยกเว้นเว้นว่างทุกช่องเพื่อล้างข้อมูลร้าน ลิงก์ Facebook ไม่บังคับ
+    const allBlank = Object.values(form).every((v) => !v.trim()) && !photo;
+    const messenger = form.messenger_url.trim() ? normalizeUrl(form.messenger_url) : "";
+    if (messenger === null) {
+      setMsg({ ok: false, text: "ลิงก์ Messenger ไม่ถูกต้อง" });
+      return;
+    }
+    if (!messenger && !allBlank) {
+      setMsg({ ok: false, text: "กรุณากรอกลิงก์ Messenger (ใช้เป็นปุ่มสั่งซื้อในหน้าเว็บ) หรือกดปุ่ม \"ล้างข้อมูลร้านทั้งหมด\"" });
       return;
     }
     const facebook = form.facebook_url.trim() ? normalizeUrl(form.facebook_url) : "";
@@ -166,6 +173,40 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
     }
     setForm((f) => ({ ...f, messenger_url: messenger, facebook_url: facebook ?? "", map_url: mapLink ?? "" }));
     setMsg({ ok: true, text: "บันทึกแล้ว" });
+    router.refresh();
+  }
+
+  // ล้างข้อมูลร้านทั้งหมด (ชื่อ เบอร์ เวลา ที่อยู่ ลิงก์ รูปร้าน) ให้กลับเป็นว่าง รอเจ้าของร้านตัวจริงมาตั้งค่าเอง
+  async function onReset() {
+    if (saving || uploading) return;
+    setMsg(null);
+    if (needMigration) {
+      setMsg({ ok: false, text: "ยังล้างข้อมูลไม่ได้ ต้องรัน migration 0006_social_links.sql ใน Supabase SQL Editor ก่อน" });
+      return;
+    }
+    const yes = await ask({
+      title: "ล้างข้อมูลร้านทั้งหมด?",
+      message: "ชื่อร้าน เบอร์โทร เวลาเปิด-ปิด ที่อยู่ ลิงก์ และรูปร้านจะถูกลบ หน้าเว็บจะว่างจนกว่าจะตั้งค่าใหม่",
+      confirmText: "ล้างข้อมูล",
+      danger: true,
+    });
+    if (!yes) return;
+    setSaving(true);
+    const blank = {
+      store_name: null, phone: null, hours: null, address: null, line_url: null, facebook_url: null, messenger_url: null,
+      ...(mapReady ? { map_url: null } : {}),
+      ...(photoReady ? { store_image_path: null } : {}),
+    };
+    const { error } = await sb().from("store_settings").update(blank).eq("id", 1);
+    setSaving(false);
+    if (error) {
+      setMsg({ ok: false, text: "ล้างข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง" });
+      return;
+    }
+    if (photo) void sb().storage.from("product-images").remove([photo]);
+    setForm({ store_name: "", phone: "", hours: "", address: "", line_url: "", facebook_url: "", messenger_url: "", map_url: "" });
+    setPhoto(null);
+    setMsg({ ok: true, text: "ล้างข้อมูลร้านแล้ว" });
     router.refresh();
   }
 
@@ -228,6 +269,9 @@ export default function SettingsForm({ initial, needMigration = false, photoRead
       <div className="adm-actions">
         <button className="btn btn-dark" type="submit" disabled={saving}>
           {saving ? "กำลังบันทึก..." : "บันทึก"}
+        </button>
+        <button className="btn btn-ghost" type="button" onClick={onReset} disabled={saving || uploading} style={{ color: "#b42318" }}>
+          ล้างข้อมูลร้านทั้งหมด
         </button>
       </div>
     </form>
