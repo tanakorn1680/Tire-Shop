@@ -316,7 +316,7 @@ export default function ProductsManager({
         <button className="btn btn-dark" type="button" onClick={onAdd}>
           + เพิ่มสินค้า
         </button>
-        <Link href="/admin/services" className="btn btn-ghost">+ เพิ่มบริการ</Link>
+        <Link href="/admin/services" className="btn btn-dark">+ เพิ่มบริการ</Link>
       </div>
 
       {err && <p className="adm-msg err" style={{ marginBottom: 12 }}>{err}</p>}
