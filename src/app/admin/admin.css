@@ -292,3 +292,17 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm .btn-danger-solid:hover{background:#b42318}
 
 @media (prefers-reduced-motion:reduce){.adm-drawer,.adm-drawer.open{transition:none}}
+
+/* การ์ดความคืบหน้าการตั้งค่าร้าน (หน้าหลักแอดมิน) */
+.adm-setup{display:flex;align-items:center;gap:16px;padding:16px 18px;margin-bottom:16px;background:#fff;border:1px solid var(--line);border-radius:16px;color:inherit;text-decoration:none}
+.adm-setup:hover{border-color:var(--blue)}
+.adm-ring{position:relative;width:64px;height:64px;flex:none}
+.adm-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.adm-ring circle{fill:none;stroke-width:6}
+.adm-ring .trk{stroke:#eceef2}
+.adm-ring .prg{stroke:var(--blue);stroke-linecap:round}
+.adm-ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;font-weight:600;color:var(--blue)}
+.adm-setup-tx{min-width:0}
+.adm-setup-tx h2{font-size:16px}
+.adm-setup-tx p{font-size:14px;margin-top:2px}
+.adm-setup-tx small{display:block;margin-top:4px;font-size:12px;color:var(--muted)}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AddProductHome from "./AddProductHome";
+import SetupCard from "@/components/admin/SetupCard";
 import { getAdminUser, sbServer } from "@/lib/supabase-server";
 import { baht, guessKind, typeLabel, typeUnit, type Category, type ProductType } from "@/lib/product-meta";
 
@@ -33,6 +34,23 @@ export default async function AdminHome() {
     );
   }
 
+  // ความคืบหน้าการตั้งค่าร้าน (เฉพาะเจ้าของร้าน): ชื่อร้าน เบอร์โทร เวลาเปิด-ปิด ที่อยู่ และลิงก์ Messenger (จำเป็น)
+  let setupSteps: { label: string; done: boolean }[] = [];
+  if (role === "owner") {
+    const full = await supabase.from("store_settings").select("store_name,phone,hours,address,messenger_url").eq("id", 1).maybeSingle();
+    const st: Record<string, string | null> = (full.error
+      ? (await supabase.from("store_settings").select("store_name,phone,hours,address").eq("id", 1).maybeSingle()).data
+      : full.data) ?? {};
+    const has = (k: string) => !!st[k]?.trim();
+    setupSteps = [
+      { label: "ชื่อร้าน", done: has("store_name") },
+      { label: "เบอร์โทร", done: has("phone") },
+      { label: "เวลาเปิด-ปิด", done: has("hours") },
+      { label: "ที่อยู่", done: has("address") },
+      { label: "ลิงก์ Messenger (จำเป็น)", done: has("messenger_url") },
+    ];
+  }
+
   const rows = products.data ?? [];
   // การ์ดสรุปตามประเภทสินค้าที่แอดมินเพิ่มไว้ (แสดงเฉพาะประเภทที่มีสินค้า)
   const cats = categories.data ?? [];
@@ -52,6 +70,8 @@ export default async function AdminHome() {
 
   return (
     <AddProductHome brands={brands.data ?? []} categories={categories.data ?? []} canDelete={role === "owner"}>
+
+      {setupSteps.length > 0 && <SetupCard steps={setupSteps} />}
 
       {rows.length === 0 && <p className="adm-sub">ยังไม่มีสินค้า กดปุ่ม "+ เพิ่มสินค้า" ได้เลย (พิมพ์ยี่ห้อใหม่ในฟอร์มได้ ระบบเพิ่มให้เอง)</p>}
 
