@@ -6,7 +6,7 @@ import { sb } from "@/lib/supabase-browser";
 import { useConfirm } from "@/components/admin/Confirm";
 import { imageUrl } from "@/lib/supabase";
 import {
-  baht, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
+  baht, dateTimeText, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
   type AdminProduct, type Category, type Named, type ProductType,
 } from "@/lib/product-meta";
 import ProductForm from "./ProductForm";
@@ -29,6 +29,7 @@ export default function ProductsManager({
   const [lowOnly, setLowOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE);
   const [busy, setBusy] = useState(false);
+  const [qty, setQty] = useState<Record<string, number>>({}); // จำนวนที่กำลังปรับ (ยังไม่บันทึก) แยกตาม id
   const [err, setErr] = useState<string | null>(null);
 
   const counts = useMemo(() => {
@@ -64,6 +65,41 @@ export default function ProductsManager({
     setBusy(false);
     if (error) { setErr("เปลี่ยนสถานะไม่สำเร็จ"); return; }
     setItems((xs) => xs.map((x) => (x.id === p.id ? { ...x, is_active: !x.is_active } : x)));
+    router.refresh();
+  }
+
+  // ปรับจำนวนในหน้ารายการ: สินค้าติดตามรายชิ้นมีได้ 0-1 ตามข้อจำกัดในฐานข้อมูล
+  function bump(p: AdminProduct, d: number) {
+    const max = p.is_individual ? 1 : Infinity;
+    const next = Math.min(max, Math.max(0, (qty[p.id] ?? p.stock_qty) + d));
+    setQty((m) => {
+      const n = { ...m };
+      if (next === p.stock_qty) delete n[p.id]; else n[p.id] = next;
+      return n;
+    });
+  }
+
+  async function saveQty(p: AdminProduct) {
+    const next = qty[p.id];
+    if (next === undefined || next === p.stock_qty) return;
+    const unit = typeUnit(p.product_type);
+    const ok = await ask({
+      title: "ยืนยันการบันทึกจำนวน",
+      message: `เปลี่ยนจำนวนคงเหลือของ ${p.brand_name} ${p.name}${p.model ? ` ${p.model}` : ""} จาก ${p.stock_qty} เป็น ${next} ${unit} ใช่หรือไม่?`,
+      confirmText: "บันทึก",
+    });
+    if (!ok) return;
+    setBusy(true);
+    setErr(null);
+    const { data, error } = await sb().from("products").update({ stock_qty: next }).eq("id", p.id).select("stock_qty,updated_at").single();
+    setBusy(false);
+    if (error || !data) { setErr("บันทึกจำนวนไม่สำเร็จ"); return; }
+    setItems((xs) => xs.map((x) => (x.id === p.id ? { ...x, stock_qty: data.stock_qty, updated_at: data.updated_at } : x)));
+    setQty((m) => {
+      const n = { ...m };
+      delete n[p.id];
+      return n;
+    });
     router.refresh();
   }
 
@@ -156,7 +192,8 @@ export default function ProductsManager({
               {shown.map((p) => {
                 const img = imageUrl(p.image_path);
                 const unit = typeUnit(p.product_type);
-                const stock = p.is_individual ? (p.stock_qty > 0 ? "พร้อมขาย" : "ขายแล้ว") : `${p.stock_qty} ${unit}`;
+                const cur = qty[p.id] ?? p.stock_qty;
+                const stock = p.is_individual ? (cur > 0 ? "พร้อมขาย" : "ขายแล้ว") : `${cur} ${unit}`;
                 return (
                   <tr key={p.id}>
                     <td data-label="รูป">{img ? <img className="adm-thumb" src={img} alt="" /> : <div className="adm-thumb" />}</td>
@@ -165,13 +202,19 @@ export default function ProductsManager({
                       <small>
                         {p.sku ? `รหัส ${p.sku}` : ""}{p.sku && p.storage_location ? " · " : ""}{p.storage_location ? `ที่เก็บ ${p.storage_location}` : ""}
                       </small>
+                      <small>แก้ไขล่าสุด {dateTimeText(p.updated_at)}</small>
                     </td>
                     <td data-label="ขนาด">{specText(p) || "-"}</td>
                     <td data-label="ประเภท"><span className={`adm-pill ${CLS[p.product_type]}`}>{categories.find((c) => c.id === p.category_id)?.name ?? typeLabel(p.product_type)}</span></td>
                     <td className="num" data-label="คงเหลือ">
-                      <span className={isLowStock(p) ? "adm-low" : ""}>{stock}</span>
-                      {isLowStock(p) && <span className="adm-row-tag off" style={{ marginLeft: 6 }}>ใกล้หมด</span>}
-                      {!p.is_active && <span className="adm-row-tag off" style={{ marginLeft: 6 }}>ซ่อน</span>}
+                      <div className="adm-qty">
+                        {isLowStock(p) && <span className="adm-row-tag off">ใกล้หมด</span>}
+                        {!p.is_active && <span className="adm-row-tag off">ซ่อน</span>}
+                        <button type="button" className="adm-qty-btn" aria-label="ลดจำนวน" onClick={() => bump(p, -1)} disabled={busy || cur <= 0}>−</button>
+                        <span className={`adm-qty-val ${isLowStock(p) ? "adm-low" : ""}`}>{stock}</span>
+                        <button type="button" className="adm-qty-btn" aria-label="เพิ่มจำนวน" onClick={() => bump(p, 1)} disabled={busy || (p.is_individual && cur >= 1)}>+</button>
+                        <button type="button" className="btn btn-dark btn-sm" onClick={() => saveQty(p)} disabled={busy || cur === p.stock_qty}>บันทึก</button>
+                      </div>
                     </td>
                     <td className="num" data-label="ราคาขาย">฿{baht(p.sale_price)}</td>
                     <td className="acts-c">

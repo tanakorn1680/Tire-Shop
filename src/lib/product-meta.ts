@@ -31,7 +31,7 @@ export type AdminProduct = {
   tread_depth_mm: number | null; condition_note: string | null; defect_note: string | null; repair_note: string | null;
   wheel_width_in: number | null; wheel_pcd: string | null; wheel_bolts: number | null; wheel_offset_mm: number | null;
   cost_price: number; sale_price: number; stock_qty: number; low_stock_threshold: number;
-  image_path: string | null; category_id: string | null; is_active: boolean;
+  image_path: string | null; category_id: string | null; is_active: boolean; updated_at: string;
 };
 export type Named = { id: string; name: string };
 // ประเภทสินค้าที่แอดมินเพิ่มเอง (product_type = รูปแบบฟอร์มกรอกข้อมูล)
@@ -43,9 +43,15 @@ export const PRODUCT_COLUMNS =
   "width_mm,aspect_ratio,rim_inch,size_label,load_index,speed_rating,dot_week,dot_year," +
   "tread_depth_mm,condition_note,defect_note,repair_note," +
   "wheel_width_in,wheel_pcd,wheel_bolts,wheel_offset_mm," +
-  "cost_price,sale_price,stock_qty,low_stock_threshold,image_path,category_id,is_active,brands(name)";
+  "cost_price,sale_price,stock_qty,low_stock_threshold,image_path,category_id,is_active,updated_at,brands(name)";
 
 export const baht = (n: number | string) => Number(n).toLocaleString("th-TH");
+
+// วันที่-เวลาแก้ไขล่าสุด (เวลาไทย) เช่น 16 ต.ค. 69 07:40
+export const dateTimeText = (iso: string) =>
+  new Date(iso).toLocaleString("th-TH", {
+    timeZone: "Asia/Bangkok", day: "numeric", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false,
+  });
 
 // DOT 4 หลัก: 2 หลักแรก = สัปดาห์, 2 หลักหลัง = ปี (เช่น 2524 = สัปดาห์ 25 ปี 2024)
 export function dotText(week: number | null, year: number | null): string {

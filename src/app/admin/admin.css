@@ -148,6 +148,10 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-pill{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;color:#fff;white-space:nowrap}
 .adm-pill.t-new{background:var(--c-blue)}.adm-pill.t-used{background:var(--c-green)}.adm-pill.t-wheel{background:var(--c-purple)}
 .adm-low{color:#d92d20;font-weight:700}
+.adm-qty{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.adm-qty-btn{width:40px;height:40px;flex:none;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--navy);font-size:22px;font-weight:700;line-height:1;cursor:pointer}
+.adm-qty-btn:disabled{opacity:.4;cursor:default}
+.adm-qty-val{min-width:56px;text-align:center}
 .adm-panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
 .adm-panel h2{font-size:16px;margin-bottom:10px}
 .adm-panel .adm-row{border:none;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0}
