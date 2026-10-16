@@ -16,6 +16,12 @@ body:has(.adm, .adm-auth) > .ftr{display:none}
 .adm-signout{background:none;border:1px solid #444a56;color:#d4d7de;border-radius:10px;min-height:44px;font:inherit;cursor:pointer}
 .adm-signout:hover{border-color:#8b92a0;color:#fff}
 .adm-top{display:none}
+.adm-drawer{display:none}
+/* ไม่ให้เบราว์เซอร์มือถือขึ้นแถบสีฟ้า/เทาตอนแตะ ใช้ลักษณะกดของเว็บเองแทน */
+.adm *,.adm-auth *{-webkit-tap-highlight-color:transparent}
+.adm .btn,.adm-qty-btn,.adm-back,.adm-menu-btn,.adm-signout,.adm-side a,.adm-drawer a{transition:background-color .15s ease,color .15s ease,border-color .15s ease,transform .12s ease}
+.adm .btn:active:not(:disabled),.adm-qty-btn:active:not(:disabled),.adm-back:active,.adm-menu-btn:active,.adm-signout:active{transform:scale(.97)}
+.adm-side a:not(.on):active,.adm-drawer a:not(.on):active{background:rgba(255,255,255,.12)}
 .adm-back{flex:none;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:#374151;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
 .adm-tb{display:flex;align-items:center;gap:14px;padding:14px 24px;background:#fff;border-bottom:1px solid var(--line)}
 .adm-tb form{flex:1;max-width:560px}
@@ -34,7 +40,8 @@ body:has(.adm, .adm-auth) > .ftr{display:none}
   .adm-top .adm-back{padding:0 12px;border-color:#444a56;background:none;color:#fff}
   .adm-back-d{display:none}
   .adm-menu-btn{min-height:44px;padding:0 20px;border-radius:10px;border:1px solid #444a56;background:none;color:#fff;font:inherit;font-weight:700;cursor:pointer}
-  .adm-drawer{position:fixed;top:56px;left:0;right:0;bottom:0;z-index:30;background:var(--navy);overflow-y:auto;padding:8px 12px 24px;display:flex;flex-direction:column}
+  .adm-drawer{position:fixed;top:56px;left:0;right:0;bottom:0;z-index:30;background:var(--navy);overflow-y:auto;padding:8px 12px 24px;display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .22s ease,transform .22s ease,visibility 0s linear .22s}
+  .adm-drawer.open{opacity:1;visibility:visible;transform:none;transition:opacity .22s ease,transform .22s ease,visibility 0s}
   .adm-main{padding:18px 12px 50px}
 }
 
@@ -252,3 +259,5 @@ a.adm-stat:hover{border-color:var(--brand)}
 .adm-dlg-acts .btn{flex:1;justify-content:center;min-height:48px}
 .adm .btn-danger-solid{background:#d92d20;border-color:#d92d20;color:#fff;border-radius:10px}
 .adm .btn-danger-solid:hover{background:#b42318}
+
+@media (prefers-reduced-motion:reduce){.adm-drawer,.adm-drawer.open{transition:none}}

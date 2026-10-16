@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { useConfirm } from "@/components/admin/Confirm";
+import { useBackOverride } from "@/components/admin/AdminShell";
 import { imageUrl } from "@/lib/supabase";
 import {
   baht, dateTimeText, isLowStock, matchesQuery, specText, typeLabel, typeUnit,
@@ -31,6 +32,7 @@ export default function ProductsManager({
   const [busy, setBusy] = useState(false);
   const [qty, setQty] = useState<Record<string, number>>({}); // จำนวนที่กำลังปรับ (ยังไม่บันทึก) แยกตาม id
   const [err, setErr] = useState<string | null>(null);
+  useBackOverride(editing !== null, () => setEditing(null)); // ปุ่มย้อนกลับด้านบน = ปิดฟอร์มกลับรายการ
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: items.length };

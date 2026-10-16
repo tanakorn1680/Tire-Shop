@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Category, Named } from "@/lib/product-meta";
+import { useBackOverride } from "@/components/admin/AdminShell";
 import ProductForm from "./products/ProductForm";
 
 // หน้าหลัก: ปุ่มเดียว "+ เพิ่มสินค้า" กดแล้วแสดงฟอร์มในหน้านี้เลย (ไม่เปลี่ยนหน้า)
 export default function AddProductHome({ brands, categories, canDelete, children }: { brands: Named[]; categories: Category[]; canDelete: boolean; children: React.ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  useBackOverride(open, () => { setOpen(false); window.scrollTo(0, 0); }); // ปุ่มย้อนกลับด้านบน = ปิดฟอร์มกลับหน้าหลัก
 
   if (open) {
     return (

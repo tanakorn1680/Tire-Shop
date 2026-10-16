@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 // ไอคอนเส้นง่ายๆ (ไม่พึ่งแพ็กเกจเพิ่ม)
 const ICONS: Record<string, string[]> = {
@@ -18,6 +18,19 @@ const Icon = ({ n }: { n: string }) => (
 );
 import { sb } from "@/lib/supabase-browser";
 import { ConfirmProvider } from "./Confirm";
+
+// ให้ฟอร์มที่เปิดแทนหน้า (เช่น ฟอร์มเพิ่ม/แก้ไขสินค้า) กำหนดเองได้ว่าปุ่มย้อนกลับจะปิดฟอร์ม แทนที่จะออกจากหน้า
+const BackCtx = createContext<(fn: (() => void) | null) => void>(() => {});
+export function useBackOverride(active: boolean, fn: () => void) {
+  const set = useContext(BackCtx);
+  const ref = useRef(fn);
+  ref.current = fn;
+  useEffect(() => {
+    if (!active) return;
+    set(() => () => ref.current());
+    return () => set(null);
+  }, [active, set]);
+}
 
 // เมนูเรียงตามลำดับการใช้งานจริง เพิ่มเมนูใหม่ที่นี่เมื่อหน้านั้นพร้อมใช้งานแล้วเท่านั้น
 const NAV: { group: string | null; items: { href: string; label: string; icon: string }[] }[] = [
@@ -53,6 +66,7 @@ export default function AdminShell({
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [today, setToday] = useState("");
+  const [backFn, setBackFn] = useState<(() => void) | null>(null);
 
   // แสดงวันที่ฝั่ง client เท่านั้น (กัน hydration ไม่ตรงกัน)
   useEffect(() => {
@@ -69,7 +83,8 @@ export default function AdminShell({
   }
 
   // ย้อนกลับหน้าก่อนหน้า (ถ้าเปิดหน้านี้ตรงๆ ไม่มีประวัติ ให้ไปหน้าหลักแอดมิน)
-  const goBack = () => (window.history.length > 1 ? router.back() : router.push("/admin"));
+  const goBack = () => (backFn ? backFn() : window.history.length > 1 ? router.back() : router.push("/admin"));
+  const showBack = pathname !== "/admin" || backFn !== null;
 
   const isOn = (href: string) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
   const name = storeName?.trim() || "จัดการร้าน";
@@ -105,31 +120,29 @@ export default function AdminShell({
       <div className="adm-body">
         <header className="adm-top">
           <div className="adm-top-l">
-            {pathname !== "/admin" && <button type="button" className="adm-back" onClick={goBack}>‹ ย้อนกลับ</button>}
+            {showBack && <button type="button" className="adm-back" onClick={goBack}>‹ ย้อนกลับ</button>}
             <span className="adm-brand">{name}</span>
           </div>
           <button type="button" className="adm-menu-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
             {open ? "ปิด" : "เมนู"}
           </button>
         </header>
-        {open && (
-          <div className="adm-drawer">
-            {navList}
-            <div className="adm-side-foot">
-              <span>{roleLabel}</span>
-              <button type="button" className="adm-signout" onClick={signOut}>ออกจากระบบ</button>
-            </div>
+        <div className={`adm-drawer ${open ? "open" : ""}`}>
+          {navList}
+          <div className="adm-side-foot">
+            <span>{roleLabel}</span>
+            <button type="button" className="adm-signout" onClick={signOut}>ออกจากระบบ</button>
           </div>
-        )}
+        </div>
         <div className="adm-tb">
-          {pathname !== "/admin" && <button type="button" className="adm-back adm-back-d" onClick={goBack}>‹ ย้อนกลับ</button>}
+          {showBack && <button type="button" className="adm-back adm-back-d" onClick={goBack}>‹ ย้อนกลับ</button>}
           {/* หน้าสินค้ามีช่องค้นหาของตัวเองอยู่แล้ว ไม่แสดงซ้ำ */}
           {!pathname.startsWith("/admin/products") && <form onSubmit={(e) => { e.preventDefault(); router.push(`/admin/products${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`); }}>
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาสินค้า / ยี่ห้อ / รุ่น / ขนาด ..." />
           </form>}
           <span className="adm-date">{today}</span>
         </div>
-        <main className="adm-main">{children}</main>
+        <main className="adm-main"><BackCtx.Provider value={setBackFn}>{children}</BackCtx.Provider></main>
       </div>
       </ConfirmProvider>
     </div>
