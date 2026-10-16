@@ -44,7 +44,7 @@ const NAV: { group: string | null; items: { href: string; label: string; icon: s
     items: [
       { href: "/admin", label: "หน้าหลัก", icon: "home" },
       { href: "/admin/products", label: "สินค้าและสต็อก", icon: "box" },
-      { href: "/admin/history", label: "ประวัติสต็อก", icon: "clock" },
+      { href: "/admin/history", label: "ประวัติ", icon: "clock" },
     ],
   },
   {

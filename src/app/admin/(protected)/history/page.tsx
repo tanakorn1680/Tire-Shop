@@ -20,7 +20,7 @@ export default async function HistoryPage() {
     <>
       <div className="adm-pg-hd">
         <div>
-          <h1>ประวัติสต็อก</h1>
+          <h1>ประวัติ</h1>
           <p>การเพิ่มสินค้า เพิ่ม-ลดจำนวน และลบสินค้า เรียงจากใหม่ไปเก่า</p>
         </div>
       </div>

@@ -52,7 +52,7 @@ function NoteDialog({ opts, onDone }: { opts: NoteOpts; onDone: (r: NoteResult |
   async function skip() {
     const ok = await ask({
       title: "ไม่บันทึกลงประวัติ?",
-      message: "แน่ใจหรือไม่ว่าไม่ต้องการบันทึกเหตุผลลงประวัติ? รายการนี้จะไม่ปรากฏในประวัติสต็อก",
+      message: "แน่ใจหรือไม่ว่าไม่ต้องการบันทึกเหตุผลลงประวัติ? รายการนี้จะไม่ปรากฏในประวัติ",
       confirmText: "แน่ใจ ไม่บันทึก",
     });
     if (ok) onDone({ record: false, reason: "", at: "" });
