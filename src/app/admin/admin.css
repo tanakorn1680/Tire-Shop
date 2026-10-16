@@ -346,3 +346,14 @@ a.adm-stat:hover{border-color:var(--brand)}
 /* ปุ่มทรงเดียวกับ btn-dark แต่สีขาว (เช่น ปุ่มเพิ่มบริการ) */
 .adm .btn-dark.btn-white{background:#fff;color:#1a1a1a;border-color:var(--line)}
 .adm .btn-dark.btn-white:hover{background:#f3f4f6}
+
+/* ===== หน้าประวัติ: สรุปสินค้าขายดี ===== */
+.adm-month{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:14px;color:#374151}
+.adm-month input{padding:8px 12px;border:1px solid var(--line);border-radius:9px;font:inherit;font-size:16px;min-height:44px;background:#fff}
+.adm-sales{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;align-items:start}
+.adm-rank{width:26px;height:26px;flex:none;border-radius:50%;background:#eef2f7;color:#374151;display:grid;place-items:center;font-size:13px;font-weight:700}
+.adm-rank.top{background:var(--c-orange);color:#fff}
+.adm-bar{height:6px;border-radius:999px;background:#e8edf3;margin-top:6px;overflow:hidden}
+.adm-bar i{display:block;height:100%;background:var(--c-blue);border-radius:999px}
+.adm-sales .adm-row{flex-wrap:nowrap}
+.adm-sec-h{font-size:16px;margin:24px 0 10px}
