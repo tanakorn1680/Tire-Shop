@@ -310,3 +310,11 @@ a.adm-stat:hover{border-color:var(--brand)}
 /* ปุ่มเมนูมือถือ = สัญลักษณ์ 3 ขีด เหมือนฝั่งลูกค้า (กดเมื่อเมนูเปิดจะเป็นกากบาท) */
 .adm-menu-btn{display:grid;place-items:center;width:44px;height:44px;min-height:44px;padding:0;border:0;background:none;color:#fff;-webkit-tap-highlight-color:transparent}
 .adm-menu-btn svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+
+/* รูปสินค้าหลายรูป (ฟอร์มเพิ่ม/แก้ไขสินค้า) */
+.adm-imgs{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0}
+.adm-img-it{position:relative;width:92px;display:grid;gap:4px;justify-items:center}
+.adm-img-it .adm-thumb{width:92px;height:92px;object-fit:cover}
+.adm-img-main{position:absolute;left:4px;top:4px;font-size:11px;background:var(--blue);color:#fff;border-radius:6px;padding:1px 6px}
+.adm-img-x{position:absolute;right:4px;top:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.65);color:#fff;font-size:16px;line-height:1;cursor:pointer}
+.adm-img-set{border:0;background:none;color:var(--blue);font:inherit;font-size:12px;cursor:pointer;padding:2px}

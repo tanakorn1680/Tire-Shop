@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { getSite, imageUrl, t, type Product } from "@/lib/supabase";
 import { orderUrl, singleOrderText, type OrderItem } from "@/lib/order";
 import CardActions from "./CardActions";
+import { dotText } from "@/lib/product-meta";
 
 const toItem = (p: Product): Omit<OrderItem, "qty"> => ({
   id: p.id,
@@ -10,6 +11,24 @@ const toItem = (p: Product): Omit<OrderItem, "qty"> => ({
   size: p.size_label ? `${p.size_label}${p.load_index ? ` ${p.load_index}${p.speed_rating ?? ""}` : ""}` : "",
   price: Number(p.sale_price),
 });
+
+// ข้อมูลที่แสดงในหน้าต่างรายละเอียดสินค้า (แสดงเฉพาะข้อมูลที่มีจริง)
+function specsOf(p: Product): [string, string][] {
+  const s: [string, string][] = [];
+  if (p.category_name) s.push(["ประเภท", p.category_name]);
+  if (p.model) s.push(["รุ่น", p.model]);
+  if (p.size_label) s.push(["ขนาด", p.size_label]);
+  else if (p.rim_inch) s.push(["ขนาดล้อ", `${p.rim_inch} นิ้ว`]);
+  if (p.load_index) s.push(["ดัชนีน้ำหนัก/ความเร็ว", `${p.load_index}${p.speed_rating ?? ""}`]);
+  if (p.wheel_width_in) s.push(["ความกว้างล้อ", `${p.wheel_width_in} นิ้ว`]);
+  if (p.wheel_pcd) s.push(["รูน็อต / PCD", `${p.wheel_bolts ? `${p.wheel_bolts} รู ` : ""}${p.wheel_pcd}`]);
+  if (p.wheel_offset_mm !== null && p.wheel_offset_mm !== undefined) s.push(["Offset (ET)", String(p.wheel_offset_mm)]);
+  if (p.tread_depth_mm !== null && p.tread_depth_mm !== undefined) s.push(["ความลึกดอกยาง", `${p.tread_depth_mm} มม.`]);
+  const dot = dotText(p.dot_week ?? null, p.dot_year ?? null);
+  if (dot) s.push(["DOT", dot]);
+  if (p.condition_note) s.push(["สภาพสินค้า", p.condition_note]);
+  return s;
+}
 
 export default async function ProductGrid({ items, error, filtered, grouped }: {
   items: Product[]; error: string | null; filtered?: boolean; grouped?: boolean;
@@ -38,9 +57,15 @@ export default async function ProductGrid({ items, error, filtered, grouped }: {
             <small>{p.size_label}{p.load_index ? ` ${p.load_index}${p.speed_rating ?? ""}` : ""}</small>
             <div className="price">฿{Number(p.sale_price).toLocaleString("th-TH")}</div>
             {!p.in_stock && <span className="tag">สินค้าหมดชั่วคราว</span>}
-            {p.in_stock && messenger && (
-              <CardActions item={item} href={orderUrl(messenger, singleOrderText({ ...item, qty: 1 }))} />
-            )}
+            <CardActions
+              item={item}
+              href={messenger ? orderUrl(messenger, singleOrderText({ ...item, qty: 1 })) : ""}
+              canOrder={p.in_stock && !!messenger}
+              detail={{
+                id: p.id, brand: p.brand_name, title: `${p.name}${p.model ? ` ${p.model}` : ""}`,
+                price: Number(p.sale_price), inStock: p.in_stock, coverPath: p.image_path, specs: specsOf(p),
+              }}
+            />
           </div>
           </Fragment>
         );

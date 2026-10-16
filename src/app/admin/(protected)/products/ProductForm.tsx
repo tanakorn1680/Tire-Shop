@@ -5,10 +5,13 @@ import { useRouter } from "next/navigation";
 import { sb } from "@/lib/supabase-browser";
 import { useConfirm } from "@/components/admin/Confirm";
 import { imageUrl } from "@/lib/supabase";
+import { shrinkImage } from "@/lib/image";
 import {
   PRODUCT_COLUMNS, dotText, findBrand, guessKind, parseDot, typeLabel, typeUnit,
   type AdminProduct, type Category, type Named, type ProductType,
 } from "@/lib/product-meta";
+
+const MAX_IMG = 8;
 
 type Draft = {
   brand: string; name: string; model: string; sku: string; storage_location: string;
@@ -73,7 +76,23 @@ export default function ProductForm({
   const unit = typeUnit(type);
 
   const [form, setForm] = useState<Draft>(toDraft(product, type));
-  const [imagePath, setImagePath] = useState(product?.image_path ?? null);
+  // รูปสินค้าหลายรูป: รูปแรก = รูปหลัก (เก็บใน image_path) ทั้งหมดเก็บในตาราง product_images (ต้องรัน migration 0010)
+  const [images, setImages] = useState<string[]>(product?.image_path ? [product.image_path] : []);
+  const [savedImages, setSavedImages] = useState<string[]>(product?.image_path ? [product.image_path] : []);
+  const [multiReady, setMultiReady] = useState(false);
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      const { data, error } = await sb().from("product_images").select("path")
+        .eq("product_id", product?.id ?? "00000000-0000-0000-0000-000000000000").order("sort_order");
+      if (off || error) return;
+      setMultiReady(true);
+      const rows = (data ?? []).map((r) => r.path as string);
+      if (product && rows.length) { setImages(rows); setSavedImages(rows); }
+    })();
+    return () => { off = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product?.id]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -205,23 +224,31 @@ export default function ProductForm({
     router.refresh();
   }
 
-  async function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // เพิ่มรูปได้หลายรูป จากแกลเลอรี่หรือกล้อง: ย่อรูปก่อนอัปโหลดทีละรูป
+  async function addImages(files: File[]) {
+    if (!files.length) return;
     setErr(null);
+    const room = MAX_IMG - images.length;
+    if (room <= 0) return setErr(`เพิ่มรูปได้สูงสุด ${MAX_IMG} รูป`);
+    const list = files.slice(0, room);
     setUploading(true);
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-    const path = `${crypto.randomUUID()}.${ext}`;
-    const { error } = await sb().storage.from("product-images").upload(path, file, {
-      cacheControl: "3600",
-      contentType: file.type,
-    });
-    setUploading(false);
-    if (error) {
-      setErr("อัปโหลดรูปไม่สำเร็จ (รองรับ JPG, PNG, WEBP ขนาดไม่เกิน 5 MB)");
-      return;
+    const added: string[] = [];
+    let failed = 0;
+    for (const f of list) {
+      try {
+        const blob = await shrinkImage(f);
+        const ext = blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg";
+        const path = `${crypto.randomUUID()}.${ext}`;
+        const { error } = await sb().storage.from("product-images").upload(path, blob, { cacheControl: "3600", contentType: blob.type });
+        if (error) failed++; else added.push(path);
+      } catch {
+        failed++;
+      }
     }
-    setImagePath(path);
+    setUploading(false);
+    setImages((xs) => [...xs, ...added]);
+    if (failed) setErr(`อัปโหลดรูปไม่สำเร็จ ${failed} รูป (รองรับ JPG, PNG, WEBP)`);
+    else if (files.length > list.length) setErr(`เพิ่มรูปได้สูงสุด ${MAX_IMG} รูป`);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -285,7 +312,7 @@ export default function ProductForm({
       cost_price, sale_price, stock_qty,
       low_stock_threshold: Number.isNaN(low_stock_threshold) ? 4 : low_stock_threshold,
       is_individual: form.is_individual,
-      image_path: imagePath,
+      image_path: images[0] ?? null,
       is_active: form.is_active,
     };
 
@@ -326,11 +353,19 @@ export default function ProductForm({
       else fail("บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง");
       return;
     }
+    // บันทึกรูปทั้งหมด (ถ้าตาราง product_images พร้อม) และลบไฟล์รูปที่ถูกเอาออกจากที่เก็บรูป
+    const savedId = (data as unknown as { id: string }).id;
+    if (multiReady) {
+      await sb().from("product_images").delete().eq("product_id", savedId);
+      if (images.length) await sb().from("product_images").insert(images.map((path, i) => ({ product_id: savedId, path, sort_order: i })));
+    }
+    const gone = savedImages.filter((p) => !images.includes(p));
+    if (gone.length) void sb().storage.from("product-images").remove(gone);
+    setSavedImages(images);
     const row = data as unknown as AdminProduct & { brands: { name: string } | null };
     onDone({ ...row, brand_name: row.brands?.name ?? "" });
   }
 
-  const img = imageUrl(imagePath);
   const typedCat = catText.trim().replace(/\s+/g, " ");
   // ระหว่างพิมพ์ แสดงเฉพาะประเภทที่ตรงกับตัวอักษรที่พิมพ์
   const catChoices = typedCat && !chosen
@@ -344,14 +379,39 @@ export default function ProductForm({
     : brandList;
 
   // รูปสินค้า: ยางมือสองต้องถ่ายสภาพจริง จึงวางไว้ด้านนอก ประเภทอื่นอยู่ในรายละเอียดเพิ่มเติม
+  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fs = e.target.files ? Array.from(e.target.files) : [];
+    e.target.value = "";
+    void addImages(fs);
+  };
   const imageBlock = (
-    <>
-      <label className="adm-f">{isUsed ? "รูปสินค้า (ถ่ายสภาพจริง)" : "รูปสินค้า"}
-        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={onPickImage} disabled={uploading} />
-      </label>
+    <div className="adm-f">
+      <span>{isUsed ? "รูปสินค้า (ถ่ายสภาพจริง)" : "รูปสินค้า"} <small className="adm-hint">เพิ่มได้สูงสุด {MAX_IMG} รูป รูปแรกเป็นรูปหลัก</small></span>
+      {images.length > 0 && (
+        <div className="adm-imgs">
+          {images.map((p, i) => (
+            <div className="adm-img-it" key={p}>
+              <img src={imageUrl(p) ?? ""} alt="" className="adm-thumb" />
+              {i === 0 && <b className="adm-img-main">รูปหลัก</b>}
+              <button type="button" className="adm-img-x" aria-label="ลบรูป" onClick={() => setImages((xs) => xs.filter((x) => x !== p))}>×</button>
+              {i > 0 && <button type="button" className="adm-img-set" onClick={() => setImages((xs) => [p, ...xs.filter((x) => x !== p)])}>ตั้งเป็นรูปหลัก</button>}
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <label className="btn btn-ghost btn-sm" style={{ cursor: uploading ? "default" : "pointer" }}>
+          เลือกรูปจากเครื่อง
+          <input type="file" accept="image/*" multiple onChange={pick} disabled={uploading} style={{ display: "none" }} />
+        </label>
+        <label className="btn btn-ghost btn-sm" style={{ cursor: uploading ? "default" : "pointer" }}>
+          ถ่ายรูป
+          <input type="file" accept="image/*" capture="environment" onChange={pick} disabled={uploading} style={{ display: "none" }} />
+        </label>
+      </div>
       {uploading && <p className="adm-msg">กำลังอัปโหลด...</p>}
-      {img && <img src={img} alt="" className="adm-thumb" style={{ width: 96, height: 96 }} />}
-    </>
+      {!multiReady && images.length > 1 && <span className="adm-hint">ต้องรัน migration 0010_product_images.sql ใน Supabase SQL Editor ก่อน ถึงจะเก็บได้หลายรูป (ตอนนี้เก็บเฉพาะรูปหลัก)</span>}
+    </div>
   );
 
   return (

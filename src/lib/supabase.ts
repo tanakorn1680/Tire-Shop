@@ -6,6 +6,10 @@ export type Product = {
   size_label: string; load_index: string | null; speed_rating: string | null;
   sale_price: number; in_stock: boolean; image_path: string | null;
   category_id: string | null; category_name: string | null;
+  // ข้อมูลสำหรับหน้า "รายละเอียดสินค้า" (มีหลังรัน migration 0010)
+  product_type?: string | null; rim_inch?: number | null;
+  dot_week?: number | null; dot_year?: number | null; tread_depth_mm?: number | null; condition_note?: string | null;
+  wheel_width_in?: number | null; wheel_pcd?: string | null; wheel_bolts?: number | null; wheel_offset_mm?: number | null;
 };
 export type Settings = {
   store_name: string | null; tagline: string | null; phone: string | null;

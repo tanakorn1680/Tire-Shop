@@ -141,12 +141,39 @@ select{width:100%;min-width:0;padding:9px 10px;font-size:14px}
 
 
 
-/* ปุ่มในการ์ดสินค้า: สั่งซื้อ + ปุ่มไอคอนรถเข็นสี่เหลี่ยมเล็ก */
-.card-act{grid-template-columns:1fr auto;gap:8px;align-items:stretch}
-.card-act .btn-cart{width:44px;min-height:40px;padding:0;margin-top:0;border:1px solid var(--line);border-radius:8px;background:#fff;color:#1a1a1a}
-.card-act .btn-cart svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.card-act .btn-cart.ok{color:#16a34a;border-color:#16a34a}
-.card-act .order-hint{grid-column:1/-1}
+/* ปุ่มในการ์ดสินค้า: สั่งซื้อ + ไอคอนรถเข็น + ไอคอน 3 จุด (ดูรายละเอียด) */
+.card-act{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.card-act .btn-brand{flex:1 1 0;min-width:0}
+.btn-cart,.btn-more,.card .btn-cart,.card .btn-more{flex:none;width:44px;min-height:40px;padding:0;margin-top:0;justify-content:center;border:1px solid var(--line);border-radius:8px;background:#fff;color:#1a1a1a}
+.btn-cart svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-more svg{width:20px;height:20px;fill:currentColor;stroke:none}
+.btn-cart.ok{color:#16a34a;border-color:#16a34a}
+.card-act .btn-more:only-child{margin-left:auto}
+.card-act .order-hint{flex:1 0 100%}
+
+/* หน้าต่างรายละเอียดสินค้า */
+.pd-back{position:fixed;inset:0;z-index:100;background:rgba(20,22,27,.6);display:flex;align-items:flex-end;justify-content:center}
+.pd{position:relative;background:#fff;width:100%;max-width:780px;max-height:92vh;overflow-y:auto;border-radius:16px 16px 0 0;display:grid;align-content:start}
+.pd-x{position:absolute;top:8px;right:8px;z-index:2;width:40px;height:40px;border-radius:50%;border:0;background:rgba(255,255,255,.92);box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:26px;line-height:1;cursor:pointer}
+.pd-main{position:relative;aspect-ratio:1;max-height:56vh;width:100%;background:#f0f0f3;display:grid;place-items:center;touch-action:pan-y;overflow:hidden}
+.pd-main img{width:100%;height:100%;object-fit:contain}
+.pd-none{color:var(--muted);font-size:14px}
+.pd-nav{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.9);box-shadow:0 1px 6px rgba(0,0,0,.25);font-size:22px;line-height:1;cursor:pointer}
+.pd-prev{left:8px}.pd-next{right:8px}
+.pd-thumbs{display:flex;gap:8px;padding:8px 12px;overflow-x:auto}
+.pd-thumbs button{flex:none;width:56px;height:56px;border-radius:8px;border:2px solid transparent;padding:0;overflow:hidden;background:#f0f0f3;cursor:pointer}
+.pd-thumbs button.on{border-color:var(--brand)}
+.pd-thumbs img{width:100%;height:100%;object-fit:cover;display:block}
+.pd-body{padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.pd-brand{font-size:12px;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.pd-body h3{font-size:18px}
+.pd-price{font-size:22px;font-weight:700}
+.pd-spec{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
+.pd-spec dt{color:var(--muted)}
+.pd-spec dd{margin:0;overflow-wrap:anywhere}
+.pd-act{display:flex;gap:8px}
+.pd-act .btn-brand{flex:1;justify-content:center}
+@media(min-width:761px){.pd-back{align-items:center;padding:20px}.pd{border-radius:16px;grid-template-columns:1fr 1fr;max-height:88vh}.pd-main{max-height:none}}
 
 /* รูปร้านค้าในแถบสีดำท้ายเว็บ: รูปครึ่งหนึ่งของแถบ อีกครึ่งเป็นข้อมูลร้าน */
 .ftr-photo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:center;justify-content:normal}
