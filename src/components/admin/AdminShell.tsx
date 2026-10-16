@@ -105,7 +105,7 @@ export default function AdminShell({
       <div className="adm-body">
         <header className="adm-top">
           <div className="adm-top-l">
-            <button type="button" className="adm-back" onClick={goBack}>‹ ย้อนกลับ</button>
+            {pathname !== "/admin" && <button type="button" className="adm-back" onClick={goBack}>‹ ย้อนกลับ</button>}
             <span className="adm-brand">{name}</span>
           </div>
           <button type="button" className="adm-menu-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
@@ -122,7 +122,7 @@ export default function AdminShell({
           </div>
         )}
         <div className="adm-tb">
-          <button type="button" className="adm-back adm-back-d" onClick={goBack}>‹ ย้อนกลับ</button>
+          {pathname !== "/admin" && <button type="button" className="adm-back adm-back-d" onClick={goBack}>‹ ย้อนกลับ</button>}
           {/* หน้าสินค้ามีช่องค้นหาของตัวเองอยู่แล้ว ไม่แสดงซ้ำ */}
           {!pathname.startsWith("/admin/products") && <form onSubmit={(e) => { e.preventDefault(); router.push(`/admin/products${q.trim() ? `?q=${encodeURIComponent(q.trim())}` : ""}`); }}>
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="ค้นหาสินค้า / ยี่ห้อ / รุ่น / ขนาด ..." />
